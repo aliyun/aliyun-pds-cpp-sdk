@@ -129,5 +129,9 @@ int FileUploadRequest::validate() const
         return ARG_ERROR_OPEN_UPLOAD_FILE;
     }
 
+    if (checkNameMode_ == "auto_rename") {
+        return -1;
+    }
+
     return 0;
 }

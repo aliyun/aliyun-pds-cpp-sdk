@@ -18,30 +18,12 @@
 #include <alibabacloud/pds/Export.h>
 #include <alibabacloud/pds/PdsRequest.h>
 #include <alibabacloud/pds/Types.h>
+#include <alibabacloud/pds/model/PartInfoReq.h>
 
 namespace AlibabaCloud
 {
 namespace PDS
 {
-    class PartInfoReq
-    {
-    public:
-        PartInfoReq() = default;
-        PartInfoReq(int64_t partNumber, int64_t partSize, int64_t from, int64_t to) :
-            partNumber_(partNumber),
-            partSize_(partSize),
-            from_(from),
-            to_(to){}
-        int64_t PartNumber() const { return partNumber_; }
-        int64_t PartSize() const { return partSize_; }
-        int64_t From() const { return from_; }
-        int64_t To() const { return to_; }
-    private:
-        int64_t partNumber_;
-        int64_t partSize_;
-        int64_t from_;
-        int64_t to_;
-    };
     using PartInfoReqList = std::vector<PartInfoReq>;
     class ALIBABACLOUD_PDS_EXPORT FileGetUploadUrlRequest: public PdsObjectRequest
     {
@@ -51,7 +33,6 @@ namespace PDS
         std::string Path() const;
         virtual std::shared_ptr<std::iostream> Body() const;
         void setRange(int64_t start, int64_t end);
-        void setProcess(const std::string& process);
         void setTrafficLimit(uint64_t value);
         void setUserAgent(const std::string& ua);
         std::pair<int64_t, int64_t> Range() const;
@@ -65,7 +46,6 @@ namespace PDS
         std::string path_;
         int64_t range_[2];
         bool rangeIsSet_;
-        std::string process_;
         uint64_t trafficLimit_;
         std::string userAgent_;
     };

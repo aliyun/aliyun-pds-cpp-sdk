@@ -32,12 +32,6 @@ using namespace AlibabaCloud::PDS;
 HeaderCollection PdsRequest::Headers() const
 {
     auto headers = specialHeaders();
-
-    if(headers.size() == 0 || (headers.size() > 0 && headers.count(Http::CONTENT_TYPE) == 0))
-    {
-        headers[Http::CONTENT_TYPE] = "application/xml";
-    }
-
     return headers;
 }
 

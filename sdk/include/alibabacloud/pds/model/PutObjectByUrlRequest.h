@@ -36,11 +36,11 @@ namespace PDS
         void setContentLength(uint64_t length);
         void setTrafficLimit(uint64_t value);
         void setUserAgent(const std::string& ua);
-
-        virtual HeaderCollection specialHeaders() const;
-        virtual HeaderCollection Headers() const;
-        virtual ParameterCollection Parameters() const;
+        void setContent(const std::shared_ptr<std::iostream>& content);
         virtual std::shared_ptr<std::iostream> Body() const;
+    protected:
+        virtual HeaderCollection specialHeaders() const;
+        virtual int validate() const;
     private:
         std::shared_ptr<std::iostream> content_;
         ObjectMetaData metaData_;

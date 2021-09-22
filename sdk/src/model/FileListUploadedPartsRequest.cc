@@ -24,7 +24,7 @@
 using namespace AlibabaCloud::PDS;
 
 FileListUploadedPartsRequest::FileListUploadedPartsRequest(const std::string& driveID, const std::string& fileID, const std::string& uploadID,
-    std::string marker, int64_t limit):
+   int64_t marker, int64_t limit):
         driveID_(driveID),
         fileID_(fileID),
         uploadID_(uploadID),
@@ -39,7 +39,7 @@ std::string FileListUploadedPartsRequest::Path() const
     return path_;
 }
 
-void FileListUploadedPartsRequest::setMarker(const std::string& marker)
+void FileListUploadedPartsRequest::setMarker(int64_t marker)
 {
     marker_ = marker;
 }
@@ -53,8 +53,11 @@ std::shared_ptr<std::iostream> FileListUploadedPartsRequest::Body() const
     root["part_number_marker"] = marker_;
     root["limit"] = limit_;
 
+    Json::StreamWriterBuilder builder;
+    builder.settings_["indentation"] = "";
+    std::shared_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
     auto content = std::make_shared<std::stringstream>();
-    *content << root;
+    writer->write(root, content.get());
     return content;
 }
 

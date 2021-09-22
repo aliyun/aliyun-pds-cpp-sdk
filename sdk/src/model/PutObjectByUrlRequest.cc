@@ -17,6 +17,9 @@
 #include <alibabacloud/pds/model/PutObjectByUrlRequest.h>
 #include <sstream>
 #include <iostream>
+#include "../utils/Utils.h"
+#include "ModelError.h"
+#include <alibabacloud/pds/Const.h>
 
 using namespace AlibabaCloud::PDS;
 
@@ -33,10 +36,13 @@ PutObjectByUrlRequest::PutObjectByUrlRequest(
     const ObjectMetaData &metaData) :
     PdsObjectRequest(),
     content_(content),
-    metaData_(metaData)
+    metaData_(metaData),
+    contentLengthIsSet_(false),
+    trafficLimit_(0),
+    userAgent_()
 {
     setPath(url);
-    setFlags(Flags()|REQUEST_FLAG_PARAM_IN_PATH|REQUEST_FLAG_CHECK_CRC64);
+    setFlags(Flags()|REQUEST_FLAG_PARAM_IN_PATH|REQUEST_FLAG_CHECK_CRC64|REQUEST_FLAG_OSS_DATA_REQUEST);
 }
 
 void PutObjectByUrlRequest::setContentLength(uint64_t length)
@@ -55,6 +61,16 @@ void PutObjectByUrlRequest::setUserAgent(const std::string& ua)
     userAgent_ = ua;
 }
 
+void PutObjectByUrlRequest::setContent(const std::shared_ptr<std::iostream> &content)
+{
+    content_ = content;
+}
+
+std::shared_ptr<std::iostream> PutObjectByUrlRequest::Body() const
+{
+    return content_;
+}
+
 HeaderCollection PutObjectByUrlRequest::specialHeaders() const
 {
     auto headers = PdsObjectRequest::specialHeaders();
@@ -71,21 +87,38 @@ HeaderCollection PutObjectByUrlRequest::specialHeaders() const
     return headers;
 }
 
-HeaderCollection PutObjectByUrlRequest::Headers() const
+int PutObjectByUrlRequest::validate() const
 {
-    auto headers = metaData_.toHeaderCollection();
-    if (headers.find(Http::DATE) == headers.end()) {
-        headers[Http::DATE] = "";
+    int ret = PdsObjectRequest::validate();
+    if (ret)
+    {
+        return ret;
     }
-    return headers;
-}
 
-ParameterCollection PutObjectByUrlRequest::Parameters() const
-{
-    return ParameterCollection();
-}
+    if (content_ == nullptr) {
+        return ARG_ERROR_REQUEST_BODY_NULLPTR;
+    }
 
-std::shared_ptr<std::iostream> PutObjectByUrlRequest::Body() const
-{
-    return content_;
+    if (content_->bad()) {
+        return ARG_ERROR_REQUEST_BODY_BAD_STATE;
+    }
+
+    if (content_->fail()) {
+        return ARG_ERROR_REQUEST_BODY_FAIL_STATE;
+    }
+
+    uint64_t partSize;
+
+    if (contentLengthIsSet_) {
+        partSize = contentLength_;
+    }
+    else {
+        partSize = GetIOStreamLength(*content_);
+    }
+
+    if (partSize > MaxFileSize) {
+        return ARG_ERROR_MULTIPARTUPLOAD_PARTSIZE_RANGE;
+    }
+
+    return 0;
 }

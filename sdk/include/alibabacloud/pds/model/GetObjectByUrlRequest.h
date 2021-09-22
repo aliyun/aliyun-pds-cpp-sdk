@@ -25,25 +25,22 @@ namespace AlibabaCloud
 {
 namespace PDS
 {
-    class ALIBABACLOUD_PDS_EXPORT GetObjectByUrlRequest: public ServiceRequest
+    class ALIBABACLOUD_PDS_EXPORT GetObjectByUrlRequest: public PdsObjectRequest
     {
     public:
         GetObjectByUrlRequest(const std::string& url);
         GetObjectByUrlRequest(const std::string& url, const ObjectMetaData& metaData);
+        void setUrl(const std::string& url);
         void setRange(int64_t start, int64_t end);
-        void setProcess(const std::string& process);
         void setTrafficLimit(uint64_t value);
         void setUserAgent(const std::string& ua);
-        std::pair<int64_t, int64_t> Range() const;
     protected:
-        virtual HeaderCollection Headers() const;
-        virtual ParameterCollection Parameters() const;
-        virtual std::shared_ptr<std::iostream> Body() const;
+        virtual HeaderCollection specialHeaders() const ;
+        virtual int validate() const;
     private:
         int64_t range_[2];
         bool rangeIsSet_;
         ObjectMetaData metaData_;
-        std::string process_;
         uint64_t trafficLimit_;
         std::string userAgent_;
     };

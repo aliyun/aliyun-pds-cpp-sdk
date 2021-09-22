@@ -29,12 +29,15 @@ namespace PDS
         FileGetRequest(const std::string& driveID, const std::string& fileID);
         std::string Path() const;
         virtual std::shared_ptr<std::iostream> Body() const;
+
+        void setUrlExpireSec(int64_t urlExpireSec);
     protected:
         int validate() const;
     private:
         std::string driveID_;
         std::string fileID_;
         std::string path_;
+        int64_t urlExpireSec_;
     };
 }
 }

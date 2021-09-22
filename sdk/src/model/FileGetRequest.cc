@@ -25,7 +25,8 @@ using namespace AlibabaCloud::PDS;
 
 FileGetRequest::FileGetRequest(const std::string& driveID, const std::string& fileID):
         driveID_(driveID),
-        fileID_(fileID)
+        fileID_(fileID),
+        urlExpireSec_(0)
 {
     setPath("/v2/file/get");
 }
@@ -41,6 +42,10 @@ std::shared_ptr<std::iostream> FileGetRequest::Body() const
     root["drive_id"] = driveID_;
     root["file_id"] = fileID_;
 
+    if (0 != urlExpireSec_) {
+        root["url_expire_sec"] = urlExpireSec_;
+    }
+
     auto content = std::make_shared<std::stringstream>();
     *content << root;
     return content;
@@ -49,4 +54,9 @@ std::shared_ptr<std::iostream> FileGetRequest::Body() const
 int FileGetRequest::validate() const
 {
     return 0;
+}
+
+void FileGetRequest::setUrlExpireSec(int64_t urlExpireSec)
+{
+    urlExpireSec_ = urlExpireSec;
 }

@@ -27,6 +27,7 @@ namespace PDS
         std::string driveID;
         std::string fileID;
         std::string uploadID;
+        std::string name;
         std::string filePath;
         std::string mtime;
         uint64_t size;

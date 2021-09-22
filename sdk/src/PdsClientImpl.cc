@@ -68,6 +68,9 @@ std::shared_ptr<HttpRequest> PdsClientImpl::buildHttpRequest(const std::string &
     auto ossDataRequest = !!(msg.Flags()&REQUEST_FLAG_OSS_DATA_REQUEST);
     httpRequest->setResponseStreamFactory(msg.ResponseStreamFactory());
     addHeaders(httpRequest, msg.Headers());
+    if (!ossDataRequest) {
+        addPdsHeaders(httpRequest);
+    }
     addBody(httpRequest, msg.Body(), calcContentMD5);
     if (paramInPath) {
         httpRequest->setUrl(Url(msg.Path()));
@@ -75,9 +78,7 @@ std::shared_ptr<HttpRequest> PdsClientImpl::buildHttpRequest(const std::string &
     else {
         addUrl(httpRequest, endpoint, msg);
     }
-    if (!ossDataRequest) {
-        addAuthorization(httpRequest);
-    }
+
     addOther(httpRequest, msg);
     return httpRequest;
 }
@@ -126,14 +127,25 @@ void PdsClientImpl::addHeaders(const std::shared_ptr<HttpRequest> &httpRequest, 
     httpRequest->addHeader(Http::USER_AGENT, configuration().userAgent);
 
     //Date
-    if (httpRequest->hasHeader("x-oss-date")) {
-        httpRequest->addHeader(Http::DATE, httpRequest->Header("x-oss-date"));
-    }
     if (!httpRequest->hasHeader(Http::DATE)) {
         std::time_t t = std::time(nullptr);
         t += getRequestDateOffset();
         httpRequest->addHeader(Http::DATE, ToGmtTime(t));
     }
+}
+
+void PdsClientImpl::addPdsHeaders(const std::shared_ptr<HttpRequest> &httpRequest) const
+{
+    const Credentials credentials = credentialsProvider_->getCredentials();
+    if (!credentials.AccessToken().empty()) {
+        httpRequest->addHeader(Http::AUTHORIZATION, credentials.AccessToken());
+    }
+
+    if (!httpRequest->hasHeader(Http::CONTENT_TYPE)) {
+        httpRequest->addHeader(Http::CONTENT_TYPE, "application/json");
+    }
+
+    PDS_LOG(LogLevel::LogDebug, TAG, "client(%p) request(%p) Authorization:%s", this, httpRequest.get(), credentials.AccessToken().c_str());
 }
 
 void PdsClientImpl::addBody(const std::shared_ptr<HttpRequest> &httpRequest, const std::shared_ptr<std::iostream>& body, bool contentMd5) const
@@ -158,16 +170,6 @@ void PdsClientImpl::addBody(const std::shared_ptr<HttpRequest> &httpRequest, con
     }
 
     httpRequest->addBody(body);
-}
-
-void PdsClientImpl::addAuthorization(const std::shared_ptr<HttpRequest> &httpRequest) const
-{
-    const Credentials credentials = credentialsProvider_->getCredentials();
-    if (!credentials.AccessToken().empty()) {
-        httpRequest->addHeader(Http::AUTHORIZATION, credentials.AccessToken());
-    }
-
-    PDS_LOG(LogLevel::LogDebug, TAG, "client(%p) request(%p) Authorization:%s", this, httpRequest.get(), credentials.AccessToken().c_str());
 }
 
 void PdsClientImpl::addUrl(const std::shared_ptr<HttpRequest> &httpRequest, const std::string &endpoint, const ServiceRequest &request) const
@@ -238,7 +240,7 @@ PdsError PdsClientImpl::buildError(const Error &error) const
                 err.setCode("ParseJSONError");
                 err.setMessage(ss.str());
             }
-        } else if (contentType.find("application/json") != contentType.npos) {
+        } else if (contentType.find("application/xml") != contentType.npos) {
             XMLDocument doc;
             XMLError xml_err;
             if ((xml_err = doc.Parse(error.Message().c_str(), error.Message().size())) == XML_SUCCESS) {
@@ -519,10 +521,56 @@ FileCompleteOutcome PdsClientImpl::ResumableFileUpload(const FileUploadRequest &
     if (code != 0) {
         return FileCompleteOutcome(PdsError("ValidateError", reqeustBase.validateMessage(code)));
     }
-    return FileCompleteOutcome();
-    // TODO ResumableUploader
-}
 
+    if (request.ObjectSize() <= request.PartSize())
+    {
+        auto content = GetFstreamByPath(request.FilePath(), request.FilePathW(),
+            std::ios::in | std::ios::binary);
+
+        // pds create
+        auto fileCreateReq = FileCreateRequest(request.DriveID(), request.ParentFileID(), request.Name(),
+            request.FileID(), request.CheckNameMode(), request.ObjectSize());
+
+        PartInfoReqList partInfoReqList;
+        PartInfoReq info(1, request.ObjectSize(), 0, request.ObjectSize()-1);
+        partInfoReqList.push_back(info);
+        fileCreateReq.setPartInfoList(partInfoReqList);
+        auto fileCreateOutcome = FileCreate(fileCreateReq);
+        if (!fileCreateOutcome.isSuccess()) {
+            return FileCompleteOutcome(fileCreateOutcome.error());
+        }
+        if (fileCreateOutcome.result().Exist()) {
+            return FileCompleteOutcome(PdsError("Same name file exist", "Same name file exist."));
+        }
+
+        std::string fileID = fileCreateOutcome.result().FileID();
+        std::string uploadID = fileCreateOutcome.result().UploadID();
+        PartInfoRespList partInfoRespList = fileCreateOutcome.result().PartInfoRespList();
+        if (partInfoRespList.size() == 0) {
+            return FileCompleteOutcome(PdsError("Get Upload Url error", "Get Upload url empty."));
+        }
+
+        // upload data
+        std::string uploadURl = partInfoRespList[0].UploadUrl();
+        PutObjectByUrlRequest putPartRequest(uploadURl, content);
+        if (putPartRequest.TransferProgress().Handler) {
+            putPartRequest.setTransferProgress(request.TransferProgress());
+        }
+        auto putOutCome = PutObjectByUrl(putPartRequest);
+        if (!putOutCome.isSuccess()) {
+           return FileCompleteOutcome(putOutCome.error());
+        }
+
+        // pds complete file
+        FileCompleteRequest completeRequest(request.DriveID(), fileID, uploadID);
+        auto completeOutcome = FileComplete(completeRequest);
+        return completeOutcome;
+    }
+    else {
+        ResumableUploader uploader(request, this);
+        return uploader.Upload();
+    }
+}
 
 GetObjectOutcome PdsClientImpl::ResumableFileDownload(const FileDownloadRequest &request) const
 {
@@ -531,8 +579,48 @@ GetObjectOutcome PdsClientImpl::ResumableFileDownload(const FileDownloadRequest 
     if (code != 0) {
         return GetObjectOutcome(PdsError("ValidateError", reqeustBase.validateMessage(code)));
     }
-    return GetObjectOutcome();
-    // TODO ResumableDownloader
+
+    auto fileGetReq = FileGetRequest(request.DriveID(), request.FileID());
+    auto fileGetOutcome = FileGet(fileGetReq);
+    if (!fileGetOutcome.isSuccess()) {
+        return GetObjectOutcome(fileGetOutcome.error());
+    }
+
+    auto objectSize = fileGetOutcome.result().Size();
+    auto contentHash = fileGetOutcome.result().ContentHash();
+    auto url = fileGetOutcome.result().Url();
+
+    if (objectSize < (int64_t)request.PartSize()) {
+        auto getObjectReq = GetObjectByUrlRequest(url);
+        getObjectReq.setResponseStreamFactory([=]() {
+            return GetFstreamByPath(request.FilePath(), request.FilePathW(),
+                std::ios_base::out | std::ios_base::in | std::ios_base::trunc | std::ios_base::binary);
+        });
+        if (request.RangeIsSet()) {
+            getObjectReq.setRange(request.RangeStart(), request.RangeEnd());
+        }
+        if (request.TransferProgress().Handler) {
+            getObjectReq.setTransferProgress(request.TransferProgress());
+        }
+        if (request.TrafficLimit() != 0) {
+            getObjectReq.setTrafficLimit(request.TrafficLimit());
+        }
+        auto outcome = GetObjectByUrl(getObjectReq);
+        std::shared_ptr<std::iostream> content = nullptr;
+        outcome.result().setContent(content);
+        if (IsFileExist(request.TempFilePath())) {
+            RemoveFile(request.TempFilePath());
+        }
+#ifdef _WIN32
+        else if (IsFileExist(request.TempFilePathW())) {
+            RemoveFile(request.TempFilePathW());
+        }
+#endif
+        return outcome;
+    }
+
+    ResumableDownloader downloader(request, this, objectSize, contentHash, url);
+    return downloader.Download();
 }
 
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2018 Alibaba Cloud All rights reserved.
+ * Copyright 2009-2017 Alibaba Cloud All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,30 +16,28 @@
 
 #pragma once
 #include <alibabacloud/pds/Export.h>
-#include <alibabacloud/pds/PdsRequest.h>
+#include <alibabacloud/pds/PdsResult.h>
 #include <alibabacloud/pds/Types.h>
 
 namespace AlibabaCloud
 {
 namespace PDS
 {
-    class ALIBABACLOUD_PDS_EXPORT FileListUploadedPartsRequest: public PdsRequest
+    class PartInfoResp
     {
     public:
-        FileListUploadedPartsRequest(const std::string& driveID, const std::string& fileID, const std::string& uploadID,
-            int64_t marker, int64_t limit);
-        std::string Path() const;
-        void setMarker(int64_t marker);
-        virtual std::shared_ptr<std::iostream> Body() const;
-    protected:
-        int validate() const;
-    private:
-        std::string driveID_;
-        std::string fileID_;
-        std::string uploadID_;
-        int64_t marker_;
-        int64_t limit_;
-        std::string path_;
+        PartInfoResp() = default;
+        PartInfoResp(int64_t partNumber, int64_t partSize, std::string uploadUrl) :
+            partNumber_(partNumber),
+            partSize_(partSize),
+            uploadUrl_(uploadUrl){}
+        int64_t PartNumber() const { return partNumber_; }
+        int64_t PartSize() const { return partSize_; }
+        std::string UploadUrl() const { return uploadUrl_; }
+    public:
+        int64_t partNumber_;
+        int64_t partSize_;
+        std::string uploadUrl_;
     };
 }
 }

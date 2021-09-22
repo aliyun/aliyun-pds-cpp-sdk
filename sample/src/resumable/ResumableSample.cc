@@ -3,6 +3,7 @@
 #include "ResumableSample.h"
 #include <alibabacloud/pds/Const.h>
 #include <memory>
+#include <mutex>
 #include <sstream>
 #include <fstream>
 #include <algorithm>
@@ -36,7 +37,7 @@ static void ProgressCallback(size_t increment, int64_t transfered, int64_t total
 std::string ResumableSample::ResumableFileUpload()
 {
     std::string fileID;
-    FileUploadRequest uploadRequest(Config::DriveID, Config::RootParentID, "test_resumable_file", "", "refuse", Config::FileToUpload);
+    FileUploadRequest uploadRequest(Config::DriveID, Config::RootParentID, "test_resumable_file", "", "refuse", Config::FileToUpload, "checkpoint_dir");
     TransferProgress progressCallback = { ProgressCallback , this };
     uploadRequest.setTransferProgress(progressCallback);
     auto uploadOutcome = client->ResumableFileUpload(uploadRequest);
@@ -52,7 +53,7 @@ std::string ResumableSample::ResumableFileUpload()
 
 void ResumableSample::ResumableFileDownload(const std::string& fileID)
 {
-    FileDownloadRequest downloadRequest(Config::DriveID, fileID, Config::FileDownloadTo);
+    FileDownloadRequest downloadRequest(Config::DriveID, fileID, Config::FileDownloadTo, "checkpoint_dir");
     TransferProgress progressCallback = { ProgressCallback , this };
     downloadRequest.setTransferProgress(progressCallback);
     auto getOutcome = client->ResumableFileDownload(downloadRequest);

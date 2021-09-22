@@ -18,27 +18,12 @@
 #include <alibabacloud/pds/Export.h>
 #include <alibabacloud/pds/PdsResult.h>
 #include <alibabacloud/pds/Types.h>
+#include <alibabacloud/pds/model/PartInfoResp.h>
 
 namespace AlibabaCloud
 {
 namespace PDS
 {
-    class PartInfoResp
-    {
-    public:
-        PartInfoResp() = default;
-        PartInfoResp(int64_t partNumber, int64_t partSize, std::string uploadUrl) :
-            partNumber_(partNumber),
-            partSize_(partSize),
-            uploadUrl_(uploadUrl){}
-        int64_t PartNumber() const { return partNumber_; }
-        int64_t PartSize() const { return partSize_; }
-        std::string UploadUrl() const { return uploadUrl_; }
-    public:
-        int64_t partNumber_;
-        int64_t partSize_;
-        std::string uploadUrl_;
-    };
     using PartInfoRespList = std::vector<PartInfoResp>;
     class ALIBABACLOUD_PDS_EXPORT FileGetUploadUrlResult :public PdsResult
     {

@@ -18,11 +18,13 @@
 #include <alibabacloud/pds/Export.h>
 #include <alibabacloud/pds/PdsRequest.h>
 #include <alibabacloud/pds/Types.h>
+#include <alibabacloud/pds/model/PartInfoReq.h>
 
 namespace AlibabaCloud
 {
 namespace PDS
 {
+    using PartInfoReqList = std::vector<PartInfoReq>;
     class ALIBABACLOUD_PDS_EXPORT FileCreateRequest: public PdsRequest
     {
     public:
@@ -30,6 +32,9 @@ namespace PDS
             const std::string& fileID, const std::string& checkNameMode, const int64_t size);
         std::string Path() const;
         virtual std::shared_ptr<std::iostream> Body() const;
+
+        void setPartInfoList(const AlibabaCloud::PDS::PartInfoReqList& partInfoReqList);
+
     protected:
         int validate() const;
     private:
@@ -41,6 +46,7 @@ namespace PDS
         std::string path_;
         int64_t size_;
         std::string type_;
+        AlibabaCloud::PDS::PartInfoReqList partInfoReqList_;
     };
 }
 }

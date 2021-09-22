@@ -26,13 +26,13 @@ namespace PDS
         int64_t partNumber;
         int64_t offset;
         int64_t size;
-        uint64_t crc64;
     };
     typedef std::vector<PartRecord> PartRecordList;
     struct DownloadRecord {
         std::string opType;
         std::string driveID;
         std::string fileID;
+        std::string contentHash;
         std::string filePath;
         std::string mtime;
         uint64_t size;
@@ -41,7 +41,6 @@ namespace PDS
         std::string md5Sum;
         int64_t rangeStart;
         int64_t rangeEnd;
-        //crc64
     };
 
 
@@ -71,6 +70,7 @@ namespace PDS
         bool renameTempFile();
         static void DownloadPartProcessCallback(size_t increment, int64_t transfered, int64_t total, void *userData);
 
+        virtual FileGetOutcome FileGetWrap(const FileGetRequest &request) const;
         virtual GetObjectOutcome GetObjectByUrlWrap(const GetObjectByUrlRequest &request) const;
 
         const FileDownloadRequest request_;

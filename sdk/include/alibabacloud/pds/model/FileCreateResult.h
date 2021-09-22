@@ -18,11 +18,13 @@
 #include <alibabacloud/pds/Export.h>
 #include <alibabacloud/pds/PdsResult.h>
 #include <alibabacloud/pds/Types.h>
+#include <alibabacloud/pds/model/PartInfoResp.h>
 
 namespace AlibabaCloud
 {
 namespace PDS
 {
+    using PartInfoRespList = std::vector<PartInfoResp>;
     class ALIBABACLOUD_PDS_EXPORT FileCreateResult :public PdsResult
     {
     public:
@@ -36,6 +38,8 @@ namespace PDS
         const std::string& Type() const { return type_; }
         bool RapidUpload() const { return rapidUpload_; }
         const std::string& UploadID() const { return uploadID_; }
+        bool Exist() const { return exist_; }
+        const AlibabaCloud::PDS::PartInfoRespList& PartInfoRespList() const { return partInfoRespList_; }
         void PrintString();
     private:
         std::string domainID_;
@@ -46,6 +50,8 @@ namespace PDS
         std::string type_;
         bool rapidUpload_;
         std::string uploadID_;
+        bool exist_;
+        AlibabaCloud::PDS::PartInfoRespList partInfoRespList_;
     };
 }
 }

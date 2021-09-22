@@ -80,8 +80,8 @@ namespace PDS
 
     private:
         void addHeaders(const std::shared_ptr<HttpRequest> &httpRequest, const HeaderCollection &headers) const;
+        void addPdsHeaders(const std::shared_ptr<HttpRequest> &httpRequest) const;
         void addBody(const std::shared_ptr<HttpRequest> &httpRequest, const std::shared_ptr<std::iostream>& body, bool contentMd5 = false) const;
-        void addAuthorization(const std::shared_ptr<HttpRequest> &httpRequest) const;
         void addUrl(const std::shared_ptr<HttpRequest> &httpRequest, const std::string &endpoint, const ServiceRequest &request) const;
         void addOther(const std::shared_ptr<HttpRequest> &httpRequest, const ServiceRequest &request) const;
 

@@ -79,11 +79,6 @@ std::pair<int64_t, int64_t> FileGetUploadUrlRequest::Range() const
     return std::pair<int64_t, int64_t>(begin, end);
 }
 
-void FileGetUploadUrlRequest::setProcess(const std::string &process)
-{
-    process_ = process;
-}
-
 void FileGetUploadUrlRequest::setTrafficLimit(uint64_t value)
 {
     trafficLimit_ = value;

@@ -54,15 +54,26 @@ std::shared_ptr<std::iostream> FileCreateRequest::Body() const
         root["file_id"] = fileID_;
     }
 
+    int index = 0;
+    for (const PartInfoReq& part : partInfoReqList_) {
+        root["part_info_list"][index]["part_number"] = part.PartNumber();
+        root["part_info_list"][index]["part_size"] = part.PartSize();
+        root["part_info_list"][index]["from"] = part.From();
+        root["part_info_list"][index]["to"] = part.To();
+        index++;
+    }
+
     auto content = std::make_shared<std::stringstream>();
     *content << root;
     return content;
 }
 
+void FileCreateRequest::setPartInfoList(const AlibabaCloud::PDS::PartInfoReqList& partInfoReqList)
+{
+    partInfoReqList_ = partInfoReqList;
+}
+
 int FileCreateRequest::validate() const
 {
-    if (checkNameMode_ == "auto_rename") {
-        return -1;
-    }
     return 0;
 }

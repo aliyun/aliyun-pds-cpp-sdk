@@ -1,0 +1,8 @@
+*.a
+*.DS_Store
+*.pyc
+*.tgz
+.idea/
+*.iml
+build/*
+.vscode/*

@@ -46,6 +46,17 @@ FileCreateResult::FileCreateResult(
     type_ = root["type"].asString();
     rapidUpload_ = root["rapid_upload"].asBool();
     uploadID_ = root["upload_id"].asString();
+    exist_ = root["exist"].asBool();
+
+    for (uint32_t i = 0; i < root["part_info_list"].size(); i++) {
+        Json::Value partValue = root["part_info_list"][i];
+        int64_t partNumber = partValue["part_number"].asInt();
+        int64_t partSize = partValue["part_size"].asInt64();
+        std::string uploadUrl = partValue["upload_url"].asString();
+
+        PartInfoResp part(partNumber, partSize, uploadUrl);
+        partInfoRespList_.push_back(part);
+    }
 }
 
 void FileCreateResult::PrintString()
@@ -57,5 +68,6 @@ void FileCreateResult::PrintString()
         ", parent_file_id: " << parentFileID_ <<
         ", type: " << type_ <<
         ", rapid_upload: " << rapidUpload_ <<
-        ", upload_id: " << uploadID_ <<std::endl;
+        ", upload_id: " << uploadID_ <<
+        ", exist: " << exist_ << std::endl;
 }

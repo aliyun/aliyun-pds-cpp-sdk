@@ -18,6 +18,7 @@
 #include <alibabacloud/pds/model/GetObjectByUrlRequest.h>
 #include <alibabacloud/pds/http/HttpType.h>
 #include <sstream>
+#include "ModelError.h"
 
 using namespace AlibabaCloud::PDS;
 
@@ -27,11 +28,19 @@ GetObjectByUrlRequest::GetObjectByUrlRequest(const std::string &url):
 }
 
 GetObjectByUrlRequest::GetObjectByUrlRequest(const std::string &url, const ObjectMetaData &metaData) :
-    ServiceRequest(),
-    metaData_(metaData)
+    PdsObjectRequest(),
+    rangeIsSet_(false),
+    metaData_(metaData),
+    trafficLimit_(0),
+    userAgent_()
 {
     setPath(url);
-    setFlags(Flags()|REQUEST_FLAG_PARAM_IN_PATH|REQUEST_FLAG_CHECK_CRC64);
+    setFlags(Flags()|REQUEST_FLAG_PARAM_IN_PATH|REQUEST_FLAG_CHECK_CRC64|REQUEST_FLAG_OSS_DATA_REQUEST);
+}
+
+void GetObjectByUrlRequest::setUrl(const std::string& url)
+{
+    setPath(url);
 }
 
 void GetObjectByUrlRequest::setRange(int64_t start, int64_t end)
@@ -39,11 +48,6 @@ void GetObjectByUrlRequest::setRange(int64_t start, int64_t end)
     range_[0] = start;
     range_[1] = end;
     rangeIsSet_ = true;
-}
-
-void GetObjectByUrlRequest::setProcess(const std::string &process)
-{
-    process_ = process;
 }
 
 void GetObjectByUrlRequest::setTrafficLimit(uint64_t value)
@@ -56,21 +60,34 @@ void GetObjectByUrlRequest::setUserAgent(const std::string& ua)
     userAgent_ = ua;
 }
 
-HeaderCollection GetObjectByUrlRequest::Headers() const
+int GetObjectByUrlRequest::validate() const
 {
-    auto headers = metaData_.toHeaderCollection();
-    if (!metaData_.hasHeader(Http::DATE)) {
-        headers[Http::DATE] = "";
+    int ret = PdsObjectRequest::validate();
+    if (ret != 0)
+        return ret;
+
+    if (rangeIsSet_ && (range_[0] < 0 || range_[1] < -1 || (range_[1] > -1 && range_[1] < range_[0]) ))
+        return ARG_ERROR_OBJECT_RANGE_INVALID;
+
+    return 0;
+}
+
+HeaderCollection GetObjectByUrlRequest::specialHeaders() const
+{
+    auto headers = PdsObjectRequest::specialHeaders();
+    if (rangeIsSet_) {
+        std::stringstream ss;
+        ss << "bytes=" << range_[0] << "-";
+        if (range_[1] != -1) ss << range_[1];
+        headers[Http::RANGE] = ss.str();
+    }
+
+    if (trafficLimit_ != 0) {
+        headers["x-oss-traffic-limit"] = std::to_string(trafficLimit_);
+    }
+
+    if (!userAgent_.empty()) {
+        headers[Http::USER_AGENT] = userAgent_;
     }
     return headers;
-}
-
-ParameterCollection GetObjectByUrlRequest::Parameters() const
-{
-    return ParameterCollection();
-}
-
-std::shared_ptr<std::iostream> GetObjectByUrlRequest::Body() const
-{
-    return nullptr;
 }
