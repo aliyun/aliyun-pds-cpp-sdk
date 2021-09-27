@@ -18,31 +18,25 @@
 #include <alibabacloud/pds/Export.h>
 #include <alibabacloud/pds/PdsRequest.h>
 #include <alibabacloud/pds/Types.h>
-#include <alibabacloud/pds/model/ObjectMetaData.h>
-#include <alibabacloud/pds/http/HttpType.h>
 
 namespace AlibabaCloud
 {
 namespace PDS
 {
-    class ALIBABACLOUD_PDS_EXPORT GetObjectByUrlRequest: public PdsObjectRequest
+    class ALIBABACLOUD_PDS_EXPORT MetaUserTagsDeleteRequest: public PdsRequest
     {
     public:
-        GetObjectByUrlRequest(const std::string& url);
-        GetObjectByUrlRequest(const std::string& url, const ObjectMetaData& metaData);
-        void setUrl(const std::string& url);
-        void setRange(int64_t start, int64_t end);
-        void setTrafficLimit(uint64_t value);
-        void setUserAgent(const std::string& ua);
+        MetaUserTagsDeleteRequest(const std::string& driveID, const std::string& fileID,
+            const std::vector<std::string>& keyList);
+        std::string Path() const;
+        virtual std::shared_ptr<std::iostream> Body() const;
     protected:
-        virtual HeaderCollection specialHeaders() const ;
-        virtual int validate() const;
+        int validate() const;
     private:
-        int64_t range_[2];
-        bool rangeIsSet_;
-        ObjectMetaData metaData_;
-        uint64_t trafficLimit_;
-        std::string userAgent_;
+        std::string driveID_;
+        std::string fileID_;
+        std::string path_;
+        std::vector<std::string> keyList_;
     };
 }
 }

@@ -35,12 +35,12 @@ PdsResult::PdsResult(const HeaderCollection& header):
     }
 }
 
-PdsObjectResult::PdsObjectResult() :
+PdsDataResult::PdsDataResult() :
     PdsResult()
 {
 }
 
-PdsObjectResult::PdsObjectResult(const HeaderCollection& header) :
+PdsDataResult::PdsDataResult(const HeaderCollection& header) :
     PdsResult(header)
 {
     if (header.find("x-oss-version-id") != header.end()) {

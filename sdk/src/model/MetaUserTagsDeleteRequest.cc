@@ -15,7 +15,7 @@
  */
 
 
-#include <alibabacloud/pds/model/DirDeleteRequest.h>
+#include <alibabacloud/pds/model/MetaUserTagsDeleteRequest.h>
 #include <alibabacloud/pds/http/HttpType.h>
 #include "../utils/Utils.h"
 #include "../external/json/json.h"
@@ -23,23 +23,31 @@
 #include <sstream>
 using namespace AlibabaCloud::PDS;
 
-DirDeleteRequest::DirDeleteRequest(const std::string& driveID, const std::string& fileID):
+MetaUserTagsDeleteRequest::MetaUserTagsDeleteRequest(const std::string& driveID, const std::string& fileID,
+    const std::vector<std::string>& keyList):
         driveID_(driveID),
-        fileID_(fileID)
+        fileID_(fileID),
+        keyList_(keyList)
 {
-    setPath("/v2/file/delete");
+    setPath("/v2/file/delete_usertags");
 }
 
-std::string DirDeleteRequest::Path() const
+std::string MetaUserTagsDeleteRequest::Path() const
 {
     return path_;
 }
 
-std::shared_ptr<std::iostream> DirDeleteRequest::Body() const
+std::shared_ptr<std::iostream> MetaUserTagsDeleteRequest::Body() const
 {
     Json::Value root;
     root["drive_id"] = driveID_;
     root["file_id"] = fileID_;
+
+    int index = 0;
+    for (const std::string& key : keyList_) {
+        root["key_list"][index] = key;
+        index++;
+    }
 
     Json::StreamWriterBuilder builder;
     builder.settings_["indentation"] = "";
@@ -49,7 +57,7 @@ std::shared_ptr<std::iostream> DirDeleteRequest::Body() const
     return content;
 }
 
-int DirDeleteRequest::validate() const
+int MetaUserTagsDeleteRequest::validate() const
 {
     return 0;
 }

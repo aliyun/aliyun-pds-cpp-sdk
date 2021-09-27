@@ -15,27 +15,25 @@
  */
 
 #pragma once
-#include <alibabacloud/pds/PdsResult.h>
+#include <alibabacloud/pds/Export.h>
+#include <alibabacloud/pds/PdsRequest.h>
 #include <alibabacloud/pds/Types.h>
 
 namespace AlibabaCloud
 {
 namespace PDS
 {
-    class ALIBABACLOUD_PDS_EXPORT PutObjectResult :public PdsObjectResult
+    class UserTag
     {
     public:
-        PutObjectResult();
-        PutObjectResult(const HeaderCollection& header);
-        PutObjectResult(const HeaderCollection& header, const std::shared_ptr<std::iostream>& content);
-        PutObjectResult(const std::string eTag, const uint64_t crc64) :eTag_(eTag), crc64_(crc64) {}
-        const std::string& ETag() const;
-        uint64_t CRC64();
-        const std::shared_ptr<std::iostream>& Content() const;
-     private:
-        std::string eTag_;
-        uint64_t crc64_;
-        std::shared_ptr<std::iostream> content_;
+        UserTag(const std::string& key, const std::string& value):
+            key_(key),
+            value_(value){}
+        const std::string& Key() const { return key_; }
+        const std::string& Value() const { return value_; }
+    public:
+        std::string key_;
+        std::string value_;
     };
 }
 }

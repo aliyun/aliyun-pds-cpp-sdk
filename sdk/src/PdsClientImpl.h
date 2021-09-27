@@ -61,13 +61,17 @@ namespace PDS
         FileTrashOutcome FileTrash(const FileTrashRequest& request) const;
         FileDeleteOutcome FileDelete(const FileDeleteRequest& request) const;
 
-        /*Object*/
-        GetObjectOutcome GetObjectByUrl(const GetObjectByUrlRequest &request) const;
-        PutObjectOutcome PutObjectByUrl(const PutObjectByUrlRequest &request) const;
+        /*Data*/
+        DataGetOutcome DataGetByUrl(const DataGetByUrlRequest &request) const;
+        DataPutOutcome DataPutByUrl(const DataPutByUrlRequest &request) const;
 
         /*Resumable Operation*/
         FileCompleteOutcome ResumableFileUpload(const FileUploadRequest& request) const;
-        GetObjectOutcome ResumableFileDownload(const FileDownloadRequest& request) const;
+        DataGetOutcome ResumableFileDownload(const FileDownloadRequest& request) const;
+
+        /*Meta*/
+        MetaUserTagsPutOutcome MetaUserTagsPut(const MetaUserTagsPutRequest& request) const;
+        PdsOutcome MetaUserTagsDelete(const MetaUserTagsDeleteRequest& request) const;
 
         /*Requests control*/
         void DisableRequest();

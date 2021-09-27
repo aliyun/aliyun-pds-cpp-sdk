@@ -15,30 +15,28 @@
  */
 
 
-#include <alibabacloud/pds/model/GetObjectResult.h>
+#include <alibabacloud/pds/model/MetaUserTagsPutResult.h>
 #include <alibabacloud/pds/http/HttpType.h>
 #include "../utils/Utils.h"
+#include "../external/json/json.h"
 
 using namespace AlibabaCloud::PDS;
 
-GetObjectResult::GetObjectResult() :
-    PdsObjectResult()
+MetaUserTagsPutResult::MetaUserTagsPutResult():
+        PdsResult()
 {
 }
 
-GetObjectResult::GetObjectResult(const std::shared_ptr<std::iostream> &content,
-    const HeaderCollection &headers):
-    PdsObjectResult(headers),
-    content_(content)
+MetaUserTagsPutResult::MetaUserTagsPutResult(
+        const std::shared_ptr<std::iostream>& content)
 {
-    metaData_  = headers;
-    std::string etag = metaData_.HttpMetaData()[Http::ETAG];
-    metaData_.HttpMetaData()[Http::ETAG] = TrimQuotes(etag.c_str());
-}
+    Json::Value root;
+    Json::CharReaderBuilder rbuilder;
+    std::string errMsg;
+    if (!Json::parseFromStream(rbuilder, *content, &root, &errMsg))
+    {
+        return;
+    }
 
-GetObjectResult::GetObjectResult(const ObjectMetaData& metaData)
-{
-    metaData_ = metaData;
-    requestId_ = metaData_.HttpMetaData()["x-oss-request-id"];
-    versionId_ = metaData_.HttpMetaData()["x-oss-version-id"];
+    fileID_ = root["file_id"].asString();
 }

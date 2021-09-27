@@ -42,12 +42,12 @@ namespace PDS
         std::string requestId_;
     };
 
-    class ALIBABACLOUD_PDS_EXPORT PdsObjectResult : public PdsResult
+    class ALIBABACLOUD_PDS_EXPORT PdsDataResult : public PdsResult
     {
     public:
-        PdsObjectResult();
-        PdsObjectResult(const HeaderCollection& value);
-        virtual ~PdsObjectResult() {};
+        PdsDataResult();
+        PdsDataResult(const HeaderCollection& value);
+        virtual ~PdsDataResult() {};
         const std::string& VersionId() const { return versionId_; }
     protected:
         std::string versionId_;

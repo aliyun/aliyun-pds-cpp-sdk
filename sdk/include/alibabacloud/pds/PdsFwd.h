@@ -59,12 +59,16 @@
 #include <alibabacloud/pds/model/FileUploadRequest.h>
 #include <alibabacloud/pds/model/FileDownloadRequest.h>
 
-#include <alibabacloud/pds/model/GetObjectByUrlRequest.h>
-#include <alibabacloud/pds/model/PutObjectByUrlRequest.h>
-#include <alibabacloud/pds/model/GetObjectResult.h>
-#include <alibabacloud/pds/model/PutObjectResult.h>
+#include <alibabacloud/pds/model/DataGetByUrlRequest.h>
+#include <alibabacloud/pds/model/DataGetResult.h>
+#include <alibabacloud/pds/model/DataPutByUrlRequest.h>
+#include <alibabacloud/pds/model/DataPutResult.h>
 
-#include <alibabacloud/pds/model/ObjectMetaData.h>
+#include <alibabacloud/pds/model/MetaUserTagsDeleteRequest.h>
+#include <alibabacloud/pds/model/MetaUserTagsPutRequest.h>
+#include <alibabacloud/pds/model/MetaUserTagsPutResult.h>
+
+#include <alibabacloud/pds/model/RequestMetaData.h>
 
 
 namespace AlibabaCloud
@@ -92,9 +96,11 @@ namespace PDS
     using FileTrashOutcome = Outcome<PdsError, FileTrashResult>;
     using FileDeleteOutcome = Outcome<PdsError, FileDeleteResult>;
 
-    using GetObjectOutcome = Outcome<PdsError, GetObjectResult>;
-    using PutObjectOutcome = Outcome<PdsError, PutObjectResult>;
+    using DataGetOutcome = Outcome<PdsError, DataGetResult>;
+    using DataPutOutcome = Outcome<PdsError, DataPutResult>;
 
-    using ObjectMetaDataOutcome = Outcome<PdsError, ObjectMetaData>;
+    using MetaUserTagsPutOutcome = Outcome<PdsError, MetaUserTagsPutResult>;
+
+    using RequestMetaDataOutcome = Outcome<PdsError, RequestMetaData>;
 }
 }

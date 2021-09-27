@@ -39,8 +39,6 @@ using namespace AlibabaCloud::PDS;
 
 #else
 static const std::regex ipPattern("((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])\\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])");
-static const std::regex bucketNamePattern("^[a-z0-9][a-z0-9\\-]{1,61}[a-z0-9]$");
-static const std::regex loggingPrefixPattern("^[a-zA-Z][a-zA-Z0-9\\-]{0,31}$");
 #endif
 
 std::string AlibabaCloud::PDS::GenerateUuid()
@@ -498,29 +496,6 @@ std::string AlibabaCloud::PDS::ToUpper(const char* source)
     return copy;
 }
 
-bool AlibabaCloud::PDS::IsIp(const std::string &host)
-{
-#if defined(__GNUG__) && __GNUC__ < 5
-    int n[4];
-    char c[4];
-    const char *p = host.c_str();
-    if (sscanf(p, "%d%c%d%c%d%c%d%c", &n[0], &c[0], &n[1], &c[1], &n[2], &c[2], &n[3], &c[3]) == 7)
-    {
-        int i;
-        for (i = 0; i < 3; ++i)
-            if (c[i] != '.')
-                return false;
-        for (i = 0; i < 4; ++i)
-            if (n[i] > 255 || n[i] < 0)
-                return false;
-        return true;
-    }
-    return false;
-#else
-    return std::regex_match(host, ipPattern);
-#endif
-}
-
 std::string AlibabaCloud::PDS::ToGmtTime(std::time_t &t)
 {
     std::stringstream date;
@@ -592,136 +567,39 @@ std::time_t AlibabaCloud::PDS::UtcToUnixTime(const std::string &t)
     return tt < 0 ? -1 : tt;
 }
 
-bool AlibabaCloud::PDS::IsValidBucketName(const std::string &bucketName)
+bool AlibabaCloud::PDS::IsValidEndpoint(const std::string &value)
 {
-#if defined(__GNUG__) && __GNUC__ < 5
-    if (bucketName.size() < 3 || bucketName.size() > 63)
+    auto host = Url(value).host();
+
+    if (host.empty())
         return false;
-    for (auto it = bucketName.begin(); it != bucketName.end(); it++) {
-        if (!((*it >= 'a' && *it <= 'z') || (*it >= '0' && *it <= '9') || *it == '-'))
+
+    for (const auto c : host) {
+        if (!((c >= 'a' && c <= 'z') ||
+            (c >= '0' && c <= '9') ||
+            (c >= 'A' && c <= 'Z') ||
+            (c == '_') ||
+            (c == '-') ||
+            (c == '.'))) {
             return false;
-    }
-    if (*bucketName.begin() == '-' || *bucketName.rbegin() == '-')
-        return false;
-    return true;
-#else
-    if (bucketName.empty())
-        return false;
-    return std::regex_match(bucketName, bucketNamePattern);
-#endif
-}
-
- bool AlibabaCloud::PDS::IsValidObjectKey(const std::string & key)
-{
-    if (key.empty() || !key.compare(0, 1, "\\", 1))
-         return false;
-
-    return key.size() <= ObjectNameLengthLimit;
-}
-
- bool AlibabaCloud::PDS::IsValidLoggingPrefix(const std::string &prefix)
- {
-     if (prefix.empty())
-         return true;
-#if defined(__GNUG__) && __GNUC__ < 5
-     if (prefix.size() > 32)
-         return false;
-
-     auto ch = static_cast<int>(*prefix.begin());
-     if (isalpha(ch) == 0)
-         return false;
-
-     for (auto it = prefix.begin(); it != prefix.end(); it++) {
-         ch = static_cast<int>(*it);
-         if (!(::isalpha(ch) || ::isdigit(ch) || *it == '-'))
-             return false;
-     }
-     return true;
-#else
-     return std::regex_match(prefix, loggingPrefixPattern);
-#endif
- }
-
- bool AlibabaCloud::PDS::IsValidChannelName(const std::string &channelName)
- {
-     if(channelName.empty() ||
-        std::string::npos != channelName.find('/') ||
-        channelName.size() > MaxLiveChannelNameLength)
-        return false;
-
-    return true;
- }
-
- bool AlibabaCloud::PDS::IsValidPlayListName(const std::string &playlistName)
- {
-     if(playlistName.empty())
-    {
-        return false;
-    }else{
-        if(!IsValidObjectKey(playlistName))
-        {
-            return false;
-        }
-        if(playlistName.size() < MinLiveChannelPlayListLength ||
-            playlistName.size() > MaxLiveChannelPlayListLength)
-        {
-            return false;
-        }
-        std::size_t lastPos = playlistName.find_last_of('.');
-        std::size_t slashPos = playlistName.find('/');
-        if(lastPos == std::string::npos ||
-            slashPos != std::string::npos ||
-            0 == lastPos || '.' == playlistName[lastPos-1])
-        {
-            return false;
-        }else{
-            std::string suffix = playlistName.substr(lastPos);
-            if(suffix.size() < 5)
-            {
-                return false;
-            }
-            if(ToLower(suffix.c_str()) != ".m3u8")
-            {
-                return false;
-            }
-            return true;
         }
     }
- }
 
- bool AlibabaCloud::PDS::IsValidTagKey(const std::string &key)
- {
-     if (key.empty() || key.size() > TagKeyLengthLimit)
-         return false;
+    return true;
+}
 
-     return true;
- }
+std::string AlibabaCloud::PDS::GetHostString(
+        const std::string &endpoint)
+{
+    Url url(endpoint);
+    if (url.scheme().empty()) {
+        url.setScheme(Http::SchemeToString(Http::HTTP));
+    }
 
- bool AlibabaCloud::PDS::IsValidTagValue(const std::string &value)
- {
-     return value.size() <= TagValueLengthLimit;
- }
-
- bool AlibabaCloud::PDS::IsValidEndpoint(const std::string &value)
- {
-     auto host = Url(value).host();
-
-     if (host.empty())
-         return false;
-
-     for (const auto c : host) {
-         if (!((c >= 'a' && c <= 'z') ||
-             (c >= '0' && c <= '9') ||
-             (c >= 'A' && c <= 'Z') ||
-             (c == '_') ||
-             (c == '-') ||
-             (c == '.'))) {
-             return false;
-        }
-     }
-
-     return true;
- }
+    std::ostringstream out;
+    out << url.scheme() << "://" << url.authority();
+    return out.str();
+}
 
 const std::string& AlibabaCloud::PDS::LookupMimeType(const std::string &name)
 {
@@ -870,87 +748,6 @@ const std::string& AlibabaCloud::PDS::LookupMimeType(const std::string &name)
     return defaultType;
 }
 
-std::string AlibabaCloud::PDS::GetHostString(
-        const std::string &endpoint)
-{
-    Url url(endpoint);
-    if (url.scheme().empty()) {
-        url.setScheme(Http::SchemeToString(Http::HTTP));
-    }
-
-    std::ostringstream out;
-    out << url.scheme() << "://" << url.authority();
-    return out.str();
-}
-
-std::string AlibabaCloud::PDS::CombineHostString(
-    const std::string &endpoint,
-    const std::string &bucket,
-    bool isCname)
-{
-    Url url(endpoint);
-    if (url.scheme().empty()) {
-        url.setScheme(Http::SchemeToString(Http::HTTP));
-    }
-
-    if (!bucket.empty() && !isCname && !IsIp(url.host())) {
-        std::string host(bucket);
-        host.append(".").append(url.host());
-        url.setHost(host);
-    }
-
-    std::ostringstream out;
-    out << url.scheme() << "://" << url.authority();
-    return out.str();
-}
-
-std::string AlibabaCloud::PDS::CombinePathString(
-    const std::string &endpoint,
-    const std::string &bucket,
-    const std::string &key)
-{
-    Url url(endpoint);
-    std::string path;
-    path = "/";
-    if (IsIp(url.host())) {
-        path.append(bucket).append("/");
-    }
-    path.append(UrlEncode(key));
-    return path;
-}
-
-std::string AlibabaCloud::PDS::CombineRTMPString(
-    const std::string &endpoint,
-    const std::string &bucket,
-    bool isCname)
-{
-    Url url(endpoint);
-    if (!bucket.empty() && !isCname && !IsIp(url.host())) {
-        std::string host(bucket);
-        host.append(".").append(url.host());
-        url.setHost(host);
-    }
-
-    std::ostringstream out;
-    out << "rtmp://" << url.authority();
-    return out.str();
-}
-
-std::string AlibabaCloud::PDS::CombineQueryString(const ParameterCollection &parameters)
-{
-    std::stringstream ss;
-    if (!parameters.empty()) {
-        for (const auto &p : parameters)
-        {
-            if (p.second.empty())
-                ss << "&" << UrlEncode(p.first);
-            else
-                ss << "&" << UrlEncode(p.first) << "=" << UrlEncode(p.second);
-        }
-    }
-    return ss.str().substr(1);
-}
-
 std::streampos AlibabaCloud::PDS::GetIOStreamLength(std::iostream &stream)
 {
     auto currentPos = stream.tellg();
@@ -962,252 +759,4 @@ std::streampos AlibabaCloud::PDS::GetIOStreamLength(std::iostream &stream)
     auto streamSize = stream.tellg();
     stream.seekg(currentPos, stream.beg);
     return streamSize;
-}
-
-const char *AlibabaCloud::PDS::ToStorageClassName(StorageClass storageClass)
-{
-    static const char *StorageClassName[] = { "Standard", "IA", "Archive", "ColdArchive" };
-    return StorageClassName[storageClass - StorageClass::Standard];
-}
-
-StorageClass AlibabaCloud::PDS::ToStorageClassType(const char *name)
-{
-    std::string storageName = ToLower(name);
-    if(!storageName.compare("ia")) return StorageClass::IA;
-    else if (!storageName.compare("archive")) return StorageClass::Archive;
-    else if (!storageName.compare("coldarchive")) return StorageClass::ColdArchive;
-    else return StorageClass::Standard;
-}
-
-const char *AlibabaCloud::PDS::ToAclName(CannedAccessControlList acl)
-{
-    static const char *AclName[] = { "private", "public-read", "public-read-write", "default"};
-    return AclName[acl - CannedAccessControlList::Private];
-}
-
-CannedAccessControlList AlibabaCloud::PDS::ToAclType(const char *name)
-{
-    std::string aclName = ToLower(name);
-    if (!aclName.compare("private")) return CannedAccessControlList::Private;
-    else if (!aclName.compare("public-read")) return CannedAccessControlList::PublicRead;
-    else if (!aclName.compare("public-read-write")) return CannedAccessControlList::PublicReadWrite;
-    else return CannedAccessControlList::Default;
-}
-
-const char *AlibabaCloud::PDS::ToCopyActionName(CopyActionList action)
-{
-    static const char *ActionName[] = { "COPY", "REPLACE"};
-    return ActionName[action - CopyActionList::Copy];
-}
-
-const char *AlibabaCloud::PDS::ToRuleStatusName(RuleStatus status)
-{
-    static const char *StatusName[] = { "Enabled", "Disabled" };
-    return StatusName[status - RuleStatus::Enabled];
-}
-
-RuleStatus AlibabaCloud::PDS::ToRuleStatusType(const char *name)
-{
-    std::string statusName = ToLower(name);
-    if (!statusName.compare("enabled")) return RuleStatus::Enabled;
-    else return RuleStatus::Disabled;
-}
-
-const char *AlibabaCloud::PDS::ToLiveChannelStatusName(LiveChannelStatus status)
-{
-    if(status > LiveChannelStatus::LiveStatus)
-        return "";
-
-    static const char *StatusName[] = { "enabled", "disabled", "idle", "live" };
-    return StatusName[status - LiveChannelStatus::EnabledStatus];
-}
-
-LiveChannelStatus AlibabaCloud::PDS::ToLiveChannelStatusType(const char *name)
-{
-    std::string statusName = ToLower(name);
-    if (!statusName.compare("enabled")) return LiveChannelStatus::EnabledStatus;
-    else if (!statusName.compare("disabled")) return LiveChannelStatus::DisabledStatus;
-    else if (!statusName.compare("idle")) return LiveChannelStatus::IdleStatus;
-    else if (!statusName.compare("live")) return LiveChannelStatus::LiveStatus;
-    else return LiveChannelStatus::UnknownStatus;
-}
-
-const char* AlibabaCloud::PDS::ToRequestPayerName(RequestPayer payer)
-{
-    static const char* PayerName[] = { "NotSet", "BucketOwner", "Requester"};
-    return PayerName[static_cast<int>(payer) - static_cast<int>(RequestPayer::NotSet)];
-}
-
-RequestPayer AlibabaCloud::PDS::ToRequestPayer(const char* name)
-{
-    std::string statusName = ToLower(name);
-    if (!statusName.compare("bucketowner")) return RequestPayer::BucketOwner;
-    else if (!statusName.compare("requester")) return RequestPayer::Requester;
-    else return RequestPayer::NotSet;
-}
-
-const char* AlibabaCloud::PDS::ToSSEAlgorithmName(SSEAlgorithm sse)
-{
-    static const char* StatusName[] = { "NotSet", "KMS", "AES256" };
-    return StatusName[static_cast<int>(sse) - static_cast<int>(SSEAlgorithm::NotSet)];
-}
-
-SSEAlgorithm AlibabaCloud::PDS::ToSSEAlgorithm(const char* name)
-{
-    std::string statusName = ToLower(name);
-    if (!statusName.compare("kms")) return SSEAlgorithm::KMS;
-    else if (!statusName.compare("aes256")) return SSEAlgorithm::AES256;
-    else return SSEAlgorithm::NotSet;
-}
-
-DataRedundancyType AlibabaCloud::PDS::ToDataRedundancyType(const char* name)
-{
-    std::string storageName = ToLower(name);
-    if (!storageName.compare("lrs")) return DataRedundancyType::LRS;
-    else if (!storageName.compare("zrs")) return DataRedundancyType::ZRS;
-    else return DataRedundancyType::NotSet;
-}
-
-const char* AlibabaCloud::PDS::ToDataRedundancyTypeName(DataRedundancyType type)
-{
-    static const char* typeName[] = { "NotSet", "LRS", "ZRS" };
-    return typeName[static_cast<int>(type) - static_cast<int>(DataRedundancyType::NotSet)];
-}
-
-const char * AlibabaCloud::PDS::ToVersioningStatusName(VersioningStatus status)
-{
-    static const char *StatusName[] = { "NotSet", "Enabled", "Suspended" };
-    return StatusName[static_cast<int>(status) - static_cast<int>(VersioningStatus::NotSet)];
-}
-
-VersioningStatus AlibabaCloud::PDS::ToVersioningStatusType(const char *name)
-{
-    std::string statusName = ToLower(name);
-    if (!statusName.compare("enabled")) return VersioningStatus::Enabled;
-    else if (!statusName.compare("suspended")) return VersioningStatus::Suspended;
-    else return VersioningStatus::NotSet;
-}
-
-const char* AlibabaCloud::PDS::ToInventoryFormatName(InventoryFormat status)
-{
-    static const char* StatusName[] = { "NotSet", "CSV"};
-    return StatusName[static_cast<int>(status) - static_cast<int>(InventoryFormat::NotSet)];
-}
-
-InventoryFormat AlibabaCloud::PDS::ToInventoryFormatType(const char* name)
-{
-    std::string statusName = ToLower(name);
-    if (!statusName.compare("csv")) return InventoryFormat::CSV;
-    else return InventoryFormat::NotSet;
-}
-
-const char* AlibabaCloud::PDS::ToInventoryFrequencyName(InventoryFrequency status)
-{
-    static const char* StatusName[] = { "NotSet", "Daily", "Weekly" };
-    return StatusName[static_cast<int>(status) - static_cast<int>(InventoryFrequency::NotSet)];
-}
-
-InventoryFrequency AlibabaCloud::PDS::ToInventoryFrequencyType(const char* name)
-{
-    std::string statusName = ToLower(name);
-    if (!statusName.compare("daily")) return InventoryFrequency::Daily;
-    else if (!statusName.compare("weekly")) return InventoryFrequency::Weekly;
-    else return InventoryFrequency::NotSet;
-}
-
-const char* AlibabaCloud::PDS::ToInventoryOptionalFieldName(InventoryOptionalField status)
-{
-    static const char* StatusName[] = { "NotSet", "Size", "LastModifiedDate", "ETag", "StorageClass", "IsMultipartUploaded", "EncryptionStatus" };
-    return StatusName[static_cast<int>(status) - static_cast<int>(InventoryOptionalField::NotSet)];
-}
-
-InventoryOptionalField AlibabaCloud::PDS::ToInventoryOptionalFieldType(const char* name)
-{
-    std::string statusName = ToLower(name);
-    if (!statusName.compare("size")) return InventoryOptionalField::Size;
-    else if (!statusName.compare("lastmodifieddate")) return InventoryOptionalField::LastModifiedDate;
-    else if (!statusName.compare("etag")) return InventoryOptionalField::ETag;
-    else if (!statusName.compare("storageclass")) return InventoryOptionalField::StorageClass;
-    else if (!statusName.compare("ismultipartuploaded")) return InventoryOptionalField::IsMultipartUploaded;
-    else if (!statusName.compare("encryptionstatus")) return InventoryOptionalField::EncryptionStatus;
-    else return InventoryOptionalField::NotSet;
-}
-
-const char* AlibabaCloud::PDS::ToInventoryIncludedObjectVersionsName(InventoryIncludedObjectVersions status)
-{
-    static const char* StatusName[] = { "NotSet", "All", "Current" };
-    return StatusName[static_cast<int>(status) - static_cast<int>(InventoryIncludedObjectVersions::NotSet)];
-}
-
-InventoryIncludedObjectVersions AlibabaCloud::PDS::ToInventoryIncludedObjectVersionsType(const char* name)
-{
-    std::string statusName = ToLower(name);
-    if (!statusName.compare("all")) return InventoryIncludedObjectVersions::All;
-    else if (!statusName.compare("current")) return InventoryIncludedObjectVersions::Current;
-    else return InventoryIncludedObjectVersions::NotSet;
-}
-
-std::string AlibabaCloud::PDS::ToInventoryBucketFullName(const std::string& name)
-{
-    std::string fullName = "acs:oss:::";
-    return fullName.append(name);
-}
-
-std::string AlibabaCloud::PDS::ToInventoryBucketShortName(const char* name)
-{
-    std::string name_ = ToLower(name);
-    std::string shortName;
-
-    if (!name_.compare(0, 10, "acs:oss:::")) {
-        shortName.append(name + 10);
-    }
-    return shortName;
-}
-
-const char * AlibabaCloud::PDS::ToTierTypeName(TierType status)
-{
-    static const char *StatusName[] = { "Expedited", "Standard", "Bulk" };
-    return StatusName[static_cast<int>(status) - static_cast<int>(TierType::Expedited)];
-}
-
-TierType AlibabaCloud::PDS::ToTierType(const char *name)
-{
-    std::string statusName = ToLower(name);
-    if (!statusName.compare("expedited")) return TierType::Expedited;
-    else if (!statusName.compare("bulk")) return TierType::Bulk;
-    else return TierType::Standard;
-}
-
-std::map<std::string, std::string> AlibabaCloud::PDS::JsonStringToMap(const std::string& jsonStr)
-{
-    std::map<std::string, std::string> valueMap;
-    Json::Value root;
-    Json::CharReaderBuilder rbuilder;
-    std::stringstream input(jsonStr);
-    std::string errMsg;
-
-    if (Json::parseFromStream(rbuilder, input, &root, &errMsg)) {
-
-        for (auto it = root.begin(); it != root.end(); ++it)
-        {
-            valueMap[it.key().asString()] = (*it).asString();
-        }
-    }
-
-    return valueMap;
-}
-
-std::string AlibabaCloud::PDS::MapToJsonString(const std::map<std::string, std::string>& map)
-{
-    if (map.empty()) {
-        return "";
-    }
-    Json::Value root;
-    for (const auto& it : map) {
-        root[it.first] = it.second;
-    }
-
-    Json::StreamWriterBuilder builder;
-    builder["indentation"] = "";
-    return Json::writeString(builder, root);
 }

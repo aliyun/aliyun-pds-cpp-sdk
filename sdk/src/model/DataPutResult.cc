@@ -15,19 +15,19 @@
  */
 
 
-#include <alibabacloud/pds/model/PutObjectResult.h>
+#include <alibabacloud/pds/model/DataPutResult.h>
 #include "../utils/Utils.h"
 #include <alibabacloud/pds/http/HttpType.h>
 using namespace AlibabaCloud::PDS;
 
-PutObjectResult::PutObjectResult():
-    PdsObjectResult(),
+DataPutResult::DataPutResult():
+    PdsDataResult(),
     content_(nullptr)
 {
 }
 
-PutObjectResult::PutObjectResult(const HeaderCollection& header, const std::shared_ptr<std::iostream>& content):
-    PdsObjectResult(header)
+DataPutResult::DataPutResult(const HeaderCollection& header, const std::shared_ptr<std::iostream>& content):
+    PdsDataResult(header)
 {
     if (header.find(Http::ETAG) != header.end())
     {
@@ -43,22 +43,22 @@ PutObjectResult::PutObjectResult(const HeaderCollection& header, const std::shar
     }
 }
 
-PutObjectResult::PutObjectResult(const HeaderCollection & header):
-    PutObjectResult(header, nullptr)
+DataPutResult::DataPutResult(const HeaderCollection & header):
+    DataPutResult(header, nullptr)
 {
 }
 
-const std::string& PutObjectResult::ETag() const
+const std::string& DataPutResult::ETag() const
 {
     return eTag_;
 }
 
-uint64_t PutObjectResult::CRC64()
+uint64_t DataPutResult::CRC64()
 {
     return crc64_;
 }
 
-const std::shared_ptr<std::iostream>& PutObjectResult::Content() const
+const std::shared_ptr<std::iostream>& DataPutResult::Content() const
 {
     return content_;
 }

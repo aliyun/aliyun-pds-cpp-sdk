@@ -50,6 +50,19 @@ void FileItem::ParseFromJson(const Json::Value& jValue)
     updatedAT_ = jValue["updated_at"].asString();
     url_ = jValue["url"].asString();
     uploadID_ = jValue["upload_id"].asString();
+
+    if (jValue.isMember("user_tags")) {
+        Json::Value tags = jValue["user_tags"];
+        Json::Value::Members members;
+        members = tags.getMemberNames();
+        for (Json::Value::Members::iterator iter = members.begin(); iter != members.end(); iter++) {
+            std::string key = *iter;
+            if (tags[key.c_str()].isString()) {
+                std::string value = tags[key.c_str()].asString();
+                userTags_[key] = value;
+            }
+        }
+    }
 }
 
 void FileItem::PrintString()

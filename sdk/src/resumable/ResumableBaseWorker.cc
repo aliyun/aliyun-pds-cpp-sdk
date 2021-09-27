@@ -27,9 +27,9 @@
 using namespace AlibabaCloud::PDS;
 
 
-ResumableBaseWorker::ResumableBaseWorker(uint64_t objectSize, uint64_t partSize) :
+ResumableBaseWorker::ResumableBaseWorker(uint64_t fileSize, uint64_t partSize) :
     hasRecord_(false),
-    objectSize_(objectSize),
+    fileSize_(fileSize),
     consumedSize_(0),
     partSize_(partSize)
 {
@@ -64,11 +64,11 @@ int ResumableBaseWorker::validate(PdsError& err)
 void ResumableBaseWorker::determinePartSize()
 {
     uint64_t partSize = partSize_;
-    uint64_t objectSize = objectSize_;
-    uint64_t partCount = (objectSize - 1) / partSize + 1;
+    uint64_t fileSize = fileSize_;
+    uint64_t partCount = (fileSize - 1) / partSize + 1;
     while (partCount > PartNumberUpperLimit) {
         partSize = partSize * 2;
-        partCount = (objectSize - 1) / partSize + 1;
+        partCount = (fileSize - 1) / partSize + 1;
     }
 
     partSize_ = partSize;

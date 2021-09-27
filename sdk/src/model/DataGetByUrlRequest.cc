@@ -15,66 +15,65 @@
  */
 
 
-#include <alibabacloud/pds/model/GetObjectByUrlRequest.h>
+#include <alibabacloud/pds/model/DataGetByUrlRequest.h>
 #include <alibabacloud/pds/http/HttpType.h>
 #include <sstream>
 #include "ModelError.h"
 
 using namespace AlibabaCloud::PDS;
 
-GetObjectByUrlRequest::GetObjectByUrlRequest(const std::string &url):
-    GetObjectByUrlRequest(url, ObjectMetaData())
+DataGetByUrlRequest::DataGetByUrlRequest(const std::string &url):
+    DataGetByUrlRequest(url, RequestMetaData())
 {
 }
 
-GetObjectByUrlRequest::GetObjectByUrlRequest(const std::string &url, const ObjectMetaData &metaData) :
-    PdsObjectRequest(),
+DataGetByUrlRequest::DataGetByUrlRequest(const std::string &url, const RequestMetaData &metaData) :
     rangeIsSet_(false),
     metaData_(metaData),
     trafficLimit_(0),
     userAgent_()
 {
     setPath(url);
-    setFlags(Flags()|REQUEST_FLAG_PARAM_IN_PATH|REQUEST_FLAG_CHECK_CRC64|REQUEST_FLAG_OSS_DATA_REQUEST);
+    setFlags(Flags()|REQUEST_FLAG_PARAM_IN_PATH|REQUEST_FLAG_CHECK_CRC64|REQUEST_FLAG_PDS_DATA_REQUEST);
 }
 
-void GetObjectByUrlRequest::setUrl(const std::string& url)
+void DataGetByUrlRequest::setUrl(const std::string& url)
 {
     setPath(url);
 }
 
-void GetObjectByUrlRequest::setRange(int64_t start, int64_t end)
+void DataGetByUrlRequest::setRange(int64_t start, int64_t end)
 {
     range_[0] = start;
     range_[1] = end;
     rangeIsSet_ = true;
 }
 
-void GetObjectByUrlRequest::setTrafficLimit(uint64_t value)
+void DataGetByUrlRequest::setTrafficLimit(uint64_t value)
 {
     trafficLimit_ = value;
 }
 
-void GetObjectByUrlRequest::setUserAgent(const std::string& ua)
+void DataGetByUrlRequest::setUserAgent(const std::string& ua)
 {
     userAgent_ = ua;
 }
 
-int GetObjectByUrlRequest::validate() const
+int DataGetByUrlRequest::validate() const
 {
-    int ret = PdsObjectRequest::validate();
+    int ret = PdsRequest::validate();
     if (ret != 0)
         return ret;
 
     if (rangeIsSet_ && (range_[0] < 0 || range_[1] < -1 || (range_[1] > -1 && range_[1] < range_[0]) ))
-        return ARG_ERROR_OBJECT_RANGE_INVALID;
+        return ARG_ERROR_DATA_RANGE_INVALID;
 
     return 0;
 }
 
-HeaderCollection GetObjectByUrlRequest::specialHeaders() const
+HeaderCollection DataGetByUrlRequest::specialHeaders() const
 {
-    auto headers = PdsObjectRequest::specialHeaders();
+    auto headers = PdsRequest::specialHeaders();
     if (rangeIsSet_) {
         std::stringstream ss;
         ss << "bytes=" << range_[0] << "-";

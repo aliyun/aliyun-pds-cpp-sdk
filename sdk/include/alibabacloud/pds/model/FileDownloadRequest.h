@@ -17,7 +17,7 @@
 #pragma once
 #include <alibabacloud/pds/Export.h>
 #include <alibabacloud/pds/PdsRequest.h>
-#include <alibabacloud/pds/model/ObjectMetaData.h>
+#include <alibabacloud/pds/model/RequestMetaData.h>
 
 namespace AlibabaCloud
 {
@@ -49,9 +49,6 @@ namespace PDS
         const std::wstring& TempFilePathW() const { return tempFilePathW_; }
 
         std::shared_ptr<std::iostream> Content() { return content_; }
-        bool RangeIsSet() const{ return rangeIsSet_; }
-        int64_t RangeStart() const { return range_[0]; }
-        int64_t RangeEnd() const { return range_[1]; }
         const std::string& ModifiedSinceConstraint() const { return modifiedSince_; }
         const std::string& UnmodifiedSinceConstraint() const { return unmodifiedSince_; }
         const std::vector<std::string>& MatchingETagsConstraint() const { return matchingETags_; }
@@ -71,8 +68,6 @@ namespace PDS
     private:
         std::string driveID_;
         std::string fileID_;
-        bool rangeIsSet_;
-        int64_t range_[2];
         std::string modifiedSince_;
         std::string unmodifiedSince_;
         std::vector<std::string> matchingETags_;

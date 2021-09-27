@@ -29,7 +29,7 @@ namespace PDS
     const int REQUEST_FLAG_PARAM_IN_PATH = (1 << 1);
     const int REQUEST_FLAG_CHECK_CRC64   = (1 << 2);
     const int REQUEST_FLAG_SAVE_CLIENT_CRC64 = (1 << 3);
-    const int REQUEST_FLAG_OSS_DATA_REQUEST = (1 << 4);
+    const int REQUEST_FLAG_PDS_DATA_REQUEST = (1 << 4);
 
     class ALIBABACLOUD_PDS_EXPORT ServiceRequest
     {

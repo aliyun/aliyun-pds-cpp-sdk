@@ -18,21 +18,21 @@
 #include <alibabacloud/pds/Export.h>
 #include <alibabacloud/pds/PdsRequest.h>
 #include <alibabacloud/pds/Types.h>
-#include <alibabacloud/pds/model/ObjectMetaData.h>
+#include <alibabacloud/pds/model/RequestMetaData.h>
 #include <alibabacloud/pds/http/HttpType.h>
 
 namespace AlibabaCloud
 {
 namespace PDS
 {
-    class ALIBABACLOUD_PDS_EXPORT PutObjectByUrlRequest : public PdsObjectRequest
+    class ALIBABACLOUD_PDS_EXPORT DataPutByUrlRequest : public PdsRequest
     {
     public:
-        PutObjectByUrlRequest(const std::string& url,
+        DataPutByUrlRequest(const std::string& url,
             const std::shared_ptr<std::iostream>& content);
-        PutObjectByUrlRequest(const std::string& url,
+        DataPutByUrlRequest(const std::string& url,
             const std::shared_ptr<std::iostream>& content,
-            const ObjectMetaData& metaData);
+            const RequestMetaData& metaData);
         void setContentLength(uint64_t length);
         void setTrafficLimit(uint64_t value);
         void setUserAgent(const std::string& ua);
@@ -43,7 +43,7 @@ namespace PDS
         virtual int validate() const;
     private:
         std::shared_ptr<std::iostream> content_;
-        ObjectMetaData metaData_;
+        RequestMetaData metaData_;
         uint64_t contentLength_;
         bool contentLengthIsSet_;
         uint64_t trafficLimit_;

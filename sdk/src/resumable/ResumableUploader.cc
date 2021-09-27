@@ -17,7 +17,7 @@
 #include <alibabacloud/pds/model/FileUploadRequest.h>
 #include <alibabacloud/pds/model/FileCreateRequest.h>
 #include <alibabacloud/pds/model/FileGetUploadUrlRequest.h>
-#include <alibabacloud/pds/model/PutObjectByUrlRequest.h>
+#include <alibabacloud/pds/model/DataPutByUrlRequest.h>
 #include <alibabacloud/pds/model/FileListUploadedPartsRequest.h>
 #include <alibabacloud/pds/model/FileCompleteRequest.h>
 #include <alibabacloud/pds/PdsFwd.h>
@@ -40,7 +40,7 @@ using namespace AlibabaCloud::PDS;
 
 
 ResumableUploader::ResumableUploader(const FileUploadRequest& request, const PdsClientImpl *client) :
-    ResumableBaseWorker(request.ObjectSize(), request.PartSize()),
+    ResumableBaseWorker(request.FileSize(), request.PartSize()),
     request_(request),
     client_(client)
 {
@@ -48,7 +48,7 @@ ResumableUploader::ResumableUploader(const FileUploadRequest& request, const Pds
         time_t lastMtime;
         std::streamsize fileSize;
         if (GetPathInfo(request.FilePath(), lastMtime, fileSize)) {
-            objectSize_ = static_cast<uint64_t>(fileSize);
+            fileSize_ = static_cast<uint64_t>(fileSize);
         }
     }
 #ifdef _WIN32
@@ -56,7 +56,7 @@ ResumableUploader::ResumableUploader(const FileUploadRequest& request, const Pds
         time_t lastMtime;
         std::streamsize fileSize;
         if (GetPathInfo(request.FilePathW(), lastMtime, fileSize)) {
-            objectSize_ = static_cast<uint64_t>(fileSize);
+            fileSize_ = static_cast<uint64_t>(fileSize);
         }
     }
 #endif
@@ -76,7 +76,7 @@ FileCompleteOutcome ResumableUploader::Upload()
         return FileCompleteOutcome(err);
     }
 
-    std::vector<PutObjectOutcome> outcomes;
+    std::vector<DataPutOutcome> outcomes;
 
     // 顺序上传分片
     Part part;
@@ -114,15 +114,12 @@ FileCompleteOutcome ResumableUploader::Upload()
             return FileCompleteOutcome(PdsError("Get Upload Url error", "Get Upload url empty."));
         }
 
-        PutObjectByUrlRequest putPartRequest(partInfoResp[0].UploadUrl(), content);
+        DataPutByUrlRequest putPartRequest(partInfoResp[0].UploadUrl(), content);
         putPartRequest.setContentLength(length);
         auto process = request_.TransferProgress();
         if (process.Handler) {
             TransferProgress uploadPartProcess = { UploadPartProcessCallback, (void *)this };
             putPartRequest.setTransferProgress(uploadPartProcess);
-        }
-        if (request_.RequestPayer() == RequestPayer::Requester) {
-            putPartRequest.setRequestPayer(request_.RequestPayer());
         }
         if (request_.TrafficLimit() != 0) {
             putPartRequest.setTrafficLimit(request_.TrafficLimit());
@@ -130,9 +127,9 @@ FileCompleteOutcome ResumableUploader::Upload()
         auto putPartOutcome = UploadPartWrap(putPartRequest);
 #ifdef ENABLE_PDS_TEST
         if (!!(request_.Flags() & 0x40000000) && part.PartNumber() == 2) {
-            const char* TAG = "ResumableUploadObjectClient";
+            const char* TAG = "ResumableUploadClient";
             PDS_LOG(LogLevel::LogDebug, TAG, "NO.2 part data upload failed.");
-            outcome = PutObjectOutcome();
+            outcome = DataPutOutcome();
         }
 #endif // ENABLE_PDS_TEST
 
@@ -175,7 +172,7 @@ FileCompleteOutcome ResumableUploader::Upload()
         return FileCompleteOutcome(completeOutcome.error());
     }
 
-    // TODO: 文件校验
+    // TODO: file check, sha1 cacl, rapidupload
 
     removeRecordFile();
 
@@ -186,7 +183,7 @@ int ResumableUploader::prepare(PdsError& err)
 {
     determinePartSize();
     FileCreateRequest fileCreateReq = FileCreateRequest(request_.DriveID(), request_.ParentFileID(), request_.Name(),
-        request_.FileID(), request_.CheckNameMode(), objectSize_);
+        request_.FileID(), request_.CheckNameMode(), fileSize_);
     auto outcome = FileCreateWrap(fileCreateReq);
     if(!outcome.isSuccess()){
         err = outcome.error();
@@ -225,7 +222,7 @@ int ResumableUploader::prepare(PdsError& err)
 
 int ResumableUploader::validateRecord()
 {
-    if (record_.size != objectSize_ || record_.mtime != request_.ObjectMtime()){
+    if (record_.size != fileSize_ || record_.mtime != request_.FileMtime()){
         return ARG_ERROR_UPLOAD_FILE_MODIFIED;
     }
 
@@ -330,12 +327,12 @@ int ResumableUploader::getPartsToUpload(PdsError &err, PartList &partsUploaded, 
         }
     }
 
-    int32_t partCount = (int32_t)((objectSize_ - 1)/ partSize_ + 1);
+    int32_t partCount = (int32_t)((fileSize_ - 1)/ partSize_ + 1);
     for(int32_t i = 0; i < partCount; i++){
         Part part;
         part.partNumber_ = i+1;
         if (i == partCount -1 ){
-            part.paretSize_ = objectSize_ - partSize_ * (partCount - 1);
+            part.paretSize_ = fileSize_ - partSize_ * (partCount - 1);
         }else{
             part.paretSize_ = partSize_;
         }
@@ -362,8 +359,8 @@ void ResumableUploader::initRecordInfo()
     record_.uploadID = uploadID_;
     record_.name = request_.Name();
     record_.filePath = filePath;
-    record_.mtime = request_.ObjectMtime();
-    record_.size = objectSize_;
+    record_.mtime = request_.FileMtime();
+    record_.size = fileSize_;
     record_.partSize = partSize_;
 }
 
@@ -406,7 +403,7 @@ void ResumableUploader::UploadPartProcessCallback(size_t increment, int64_t tran
 
     auto process = uploader->request_.TransferProgress();
     if (process.Handler) {
-        process.Handler(increment, uploader->consumedSize_, uploader->objectSize_, process.UserData);
+        process.Handler(increment, uploader->consumedSize_, uploader->fileSize_, process.UserData);
     }
 }
 
@@ -420,9 +417,9 @@ FileGetUploadUrlOutcome ResumableUploader::FileGetUploadUrlWrap(const FileGetUpl
     return client_->FileGetUploadUrl(request);
 }
 
-PutObjectOutcome ResumableUploader::UploadPartWrap(const PutObjectByUrlRequest &request) const
+DataPutOutcome ResumableUploader::UploadPartWrap(const DataPutByUrlRequest &request) const
 {
-    return client_->PutObjectByUrl(request);
+    return client_->DataPutByUrl(request);
 }
 
 FileListUploadedPartsOutcome ResumableUploader::ListUploadedPartsWrap(const FileListUploadedPartsRequest &request) const

@@ -65,10 +65,10 @@ std::shared_ptr<HttpRequest> PdsClientImpl::buildHttpRequest(const std::string &
     auto httpRequest = std::make_shared<HttpRequest>(method);
     auto calcContentMD5 = !!(msg.Flags()&REQUEST_FLAG_CONTENTMD5);
     auto paramInPath = !!(msg.Flags()&REQUEST_FLAG_PARAM_IN_PATH);
-    auto ossDataRequest = !!(msg.Flags()&REQUEST_FLAG_OSS_DATA_REQUEST);
+    auto pdsDataRequest = !!(msg.Flags()&REQUEST_FLAG_PDS_DATA_REQUEST);
     httpRequest->setResponseStreamFactory(msg.ResponseStreamFactory());
     addHeaders(httpRequest, msg.Headers());
-    if (!ossDataRequest) {
+    if (!pdsDataRequest) {
         addPdsHeaders(httpRequest);
     }
     addBody(httpRequest, msg.Body(), calcContentMD5);
@@ -129,7 +129,6 @@ void PdsClientImpl::addHeaders(const std::shared_ptr<HttpRequest> &httpRequest, 
     //Date
     if (!httpRequest->hasHeader(Http::DATE)) {
         std::time_t t = std::time(nullptr);
-        t += getRequestDateOffset();
         httpRequest->addHeader(Http::DATE, ToGmtTime(t));
     }
 }
@@ -486,34 +485,54 @@ FileDeleteOutcome PdsClientImpl::FileDelete(const FileDeleteRequest& request) co
 
 
 ////////////////////
-// Object
+// Data
 ////////////////////
-GetObjectOutcome PdsClientImpl::GetObjectByUrl(const GetObjectByUrlRequest &request) const
+DataGetOutcome PdsClientImpl::DataGetByUrl(const DataGetByUrlRequest &request) const
 {
-    auto outcome = BASE::AttemptRequest(endpoint_, request, Http::Method::Get);
+    auto outcome = MakeRequest(request, Http::Method::Get);
     if (outcome.isSuccess()) {
-        return GetObjectOutcome(GetObjectResult(outcome.result()->Body(), outcome.result()->Headers()));
+        return DataGetOutcome(DataGetResult(outcome.result().payload(), outcome.result().headerCollection()));
     }
     else {
-        return GetObjectOutcome(buildError(outcome.error()));
+        return DataGetOutcome(outcome.error());
     }
 }
 
-PutObjectOutcome PdsClientImpl::PutObjectByUrl(const PutObjectByUrlRequest &request) const
+DataPutOutcome PdsClientImpl::DataPutByUrl(const DataPutByUrlRequest &request) const
 {
-    auto outcome = BASE::AttemptRequest(endpoint_, request, Http::Method::Put);
+    auto outcome = AttemptRequest(endpoint_, request, Http::Method::Put);
     if (outcome.isSuccess()) {
-        return PutObjectOutcome(PutObjectResult(outcome.result()->Headers(),
+        return DataPutOutcome(DataPutResult(outcome.result()->Headers(),
             outcome.result()->Body()));
     }
     else {
-        return PutObjectOutcome(buildError(outcome.error()));
+        return DataPutOutcome(buildError(outcome.error()));
     }
 }
 
 ////////////////////
-// Resumable Operation
+// Meta
 ////////////////////
+MetaUserTagsPutOutcome PdsClientImpl::MetaUserTagsPut(const MetaUserTagsPutRequest& request) const
+{
+    auto outcome = MakeRequest(request, Http::Method::Post);
+    if (outcome.isSuccess()) {
+        return MetaUserTagsPutOutcome(MetaUserTagsPutResult(outcome.result().payload()));
+    }
+    else {
+        return MetaUserTagsPutOutcome(outcome.error());
+    }
+}
+
+PdsOutcome PdsClientImpl::MetaUserTagsDelete(const MetaUserTagsDeleteRequest& request) const
+{
+    auto outcome = MakeRequest(request, Http::Method::Post);
+    return outcome;
+}
+
+///////////////////////////
+// Resumable Operation
+///////////////////////////
 FileCompleteOutcome PdsClientImpl::ResumableFileUpload(const FileUploadRequest &request) const
 {
     const auto& reqeustBase = static_cast<const PdsResumableBaseRequest &>(request);
@@ -522,17 +541,17 @@ FileCompleteOutcome PdsClientImpl::ResumableFileUpload(const FileUploadRequest &
         return FileCompleteOutcome(PdsError("ValidateError", reqeustBase.validateMessage(code)));
     }
 
-    if (request.ObjectSize() <= request.PartSize())
+    if (request.FileSize() <= request.PartSize())
     {
         auto content = GetFstreamByPath(request.FilePath(), request.FilePathW(),
             std::ios::in | std::ios::binary);
 
         // pds create
         auto fileCreateReq = FileCreateRequest(request.DriveID(), request.ParentFileID(), request.Name(),
-            request.FileID(), request.CheckNameMode(), request.ObjectSize());
+            request.FileID(), request.CheckNameMode(), request.FileSize());
 
         PartInfoReqList partInfoReqList;
-        PartInfoReq info(1, request.ObjectSize(), 0, request.ObjectSize()-1);
+        PartInfoReq info(1, request.FileSize(), 0, request.FileSize()-1);
         partInfoReqList.push_back(info);
         fileCreateReq.setPartInfoList(partInfoReqList);
         auto fileCreateOutcome = FileCreate(fileCreateReq);
@@ -552,11 +571,12 @@ FileCompleteOutcome PdsClientImpl::ResumableFileUpload(const FileUploadRequest &
 
         // upload data
         std::string uploadURl = partInfoRespList[0].UploadUrl();
-        PutObjectByUrlRequest putPartRequest(uploadURl, content);
+        DataPutByUrlRequest putPartRequest(uploadURl, content);
+        // TODO: cancel
         if (putPartRequest.TransferProgress().Handler) {
             putPartRequest.setTransferProgress(request.TransferProgress());
         }
-        auto putOutCome = PutObjectByUrl(putPartRequest);
+        auto putOutCome = DataPutByUrl(putPartRequest);
         if (!putOutCome.isSuccess()) {
            return FileCompleteOutcome(putOutCome.error());
         }
@@ -572,40 +592,38 @@ FileCompleteOutcome PdsClientImpl::ResumableFileUpload(const FileUploadRequest &
     }
 }
 
-GetObjectOutcome PdsClientImpl::ResumableFileDownload(const FileDownloadRequest &request) const
+DataGetOutcome PdsClientImpl::ResumableFileDownload(const FileDownloadRequest &request) const
 {
     const auto& reqeustBase = static_cast<const PdsResumableBaseRequest &>(request);
     int code = reqeustBase.validate();
     if (code != 0) {
-        return GetObjectOutcome(PdsError("ValidateError", reqeustBase.validateMessage(code)));
+        return DataGetOutcome(PdsError("ValidateError", reqeustBase.validateMessage(code)));
     }
 
     auto fileGetReq = FileGetRequest(request.DriveID(), request.FileID());
     auto fileGetOutcome = FileGet(fileGetReq);
     if (!fileGetOutcome.isSuccess()) {
-        return GetObjectOutcome(fileGetOutcome.error());
+        return DataGetOutcome(fileGetOutcome.error());
     }
 
-    auto objectSize = fileGetOutcome.result().Size();
+    auto fileSize = fileGetOutcome.result().Size();
     auto contentHash = fileGetOutcome.result().ContentHash();
+    auto crc64Hash = fileGetOutcome.result().Crc64Hash();
     auto url = fileGetOutcome.result().Url();
 
-    if (objectSize < (int64_t)request.PartSize()) {
-        auto getObjectReq = GetObjectByUrlRequest(url);
-        getObjectReq.setResponseStreamFactory([=]() {
+    if (fileSize < (int64_t)request.PartSize()) {
+        auto getDataReq = DataGetByUrlRequest(url);
+        getDataReq.setResponseStreamFactory([=]() {
             return GetFstreamByPath(request.FilePath(), request.FilePathW(),
                 std::ios_base::out | std::ios_base::in | std::ios_base::trunc | std::ios_base::binary);
         });
-        if (request.RangeIsSet()) {
-            getObjectReq.setRange(request.RangeStart(), request.RangeEnd());
-        }
         if (request.TransferProgress().Handler) {
-            getObjectReq.setTransferProgress(request.TransferProgress());
+            getDataReq.setTransferProgress(request.TransferProgress());
         }
         if (request.TrafficLimit() != 0) {
-            getObjectReq.setTrafficLimit(request.TrafficLimit());
+            getDataReq.setTrafficLimit(request.TrafficLimit());
         }
-        auto outcome = GetObjectByUrl(getObjectReq);
+        auto outcome = DataGetByUrl(getDataReq);
         std::shared_ptr<std::iostream> content = nullptr;
         outcome.result().setContent(content);
         if (IsFileExist(request.TempFilePath())) {
@@ -619,7 +637,7 @@ GetObjectOutcome PdsClientImpl::ResumableFileDownload(const FileDownloadRequest 
         return outcome;
     }
 
-    ResumableDownloader downloader(request, this, objectSize, contentHash, url);
+    ResumableDownloader downloader(request, this, fileSize, contentHash, crc64Hash, url);
     return downloader.Download();
 }
 

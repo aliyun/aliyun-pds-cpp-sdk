@@ -42,6 +42,10 @@ int main(void)
     if (!fileID.empty()) {
         fileSample.FileDownload(fileID);
         fileSample.FileRename(fileID);
+        fileSample.UserTagsPut(fileID);
+        fileSample.FileGet(fileID);
+        fileSample.UserTagsDelete(fileID);
+        fileSample.FileGet(fileID);
         fileSample.FileTrash(fileID);
         fileSample.FileDelete(fileID);
     }
@@ -50,6 +54,8 @@ int main(void)
     std::string rFileID = resumableSample.ResumableFileUpload();
     if (!rFileID.empty()) {
         resumableSample.ResumableFileDownload(rFileID);
+        fileSample.FileTrash(rFileID);
+        fileSample.FileDelete(rFileID);
     }
 
     ShutdownSdk();

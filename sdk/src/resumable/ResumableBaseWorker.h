@@ -28,7 +28,7 @@ namespace PDS
     class ResumableBaseWorker
     {
     public:
-        ResumableBaseWorker(uint64_t objectSize, uint64_t partSize);
+        ResumableBaseWorker(uint64_t fileSize, uint64_t partSize);
 
     protected:
         virtual int validate(PdsError& err);
@@ -48,7 +48,7 @@ namespace PDS
         std::string recordPath_;
         std::wstring recordPathW_;
         std::mutex lock_;
-        uint64_t objectSize_;
+        uint64_t fileSize_;
         uint64_t consumedSize_;
         uint64_t partSize_;
     };

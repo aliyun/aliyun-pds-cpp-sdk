@@ -77,49 +77,6 @@ ParameterCollection PdsRequest::specialParameters() const
     return ParameterCollection();
 }
 
-int PdsObjectRequest::validate() const
-{
-    return 0;
-}
-
-void PdsObjectRequest::setRequestPayer(AlibabaCloud::PDS::RequestPayer key)
-{
-    requestPayer_ = key;
-}
-
-AlibabaCloud::PDS::RequestPayer PdsObjectRequest::RequestPayer() const
-{
-    return requestPayer_;
-}
-
-void PdsObjectRequest::setVersionId(const std::string& versionId)
-{
-    versionId_ = versionId;
-}
-
-const std::string& PdsObjectRequest::VersionId() const
-{
-    return versionId_;
-}
-
-HeaderCollection PdsObjectRequest::specialHeaders() const
-{
-    auto headers = PdsRequest::specialHeaders();
-    if (requestPayer_ == AlibabaCloud::PDS::RequestPayer::Requester) {
-        headers["x-oss-request-payer"] = ToLower(ToRequestPayerName(AlibabaCloud::PDS::RequestPayer::Requester));
-    }
-    return headers;
-}
-
-ParameterCollection PdsObjectRequest::specialParameters() const
-{
-    auto parameters = PdsRequest::specialParameters();
-    if (!versionId_.empty()) {
-        parameters["versionId"] = versionId_;
-    }
-    return parameters;
-}
-
 int PdsResumableBaseRequest::validate() const
 {
     if (partSize_ < PartSizeLowerLimit) {
@@ -165,14 +122,14 @@ uint64_t PdsResumableBaseRequest::PartSize() const
     return partSize_;
 }
 
-void PdsResumableBaseRequest::setObjectSize(uint64_t objectSize)
+void PdsResumableBaseRequest::setFileSize(uint64_t fileSize)
 {
-    objectSize_ = objectSize;
+    fileSize_ = fileSize;
 }
 
-uint64_t PdsResumableBaseRequest::ObjectSize() const
+uint64_t PdsResumableBaseRequest::FileSize() const
 {
-    return objectSize_;
+    return fileSize_;
 }
 
 void PdsResumableBaseRequest::setThreadNum(uint32_t threadNum)
@@ -207,24 +164,14 @@ const std::wstring& PdsResumableBaseRequest::CheckpointDirW() const
     return checkpointDirW_;
 }
 
-void PdsResumableBaseRequest::setObjectMtime(const std::string &mtime)
+void PdsResumableBaseRequest::setFileMtime(const std::string &mtime)
 {
     mtime_ = mtime;
 }
 
-const std::string& PdsResumableBaseRequest::ObjectMtime() const
+const std::string& PdsResumableBaseRequest::FileMtime() const
 {
     return mtime_;
-}
-
-void PdsResumableBaseRequest::setRequestPayer(AlibabaCloud::PDS::RequestPayer value)
-{
-    requestPayer_ = value;
-}
-
-AlibabaCloud::PDS::RequestPayer PdsResumableBaseRequest::RequestPayer() const
-{
-    return requestPayer_;
 }
 
 void PdsResumableBaseRequest::setTrafficLimit(uint64_t value)

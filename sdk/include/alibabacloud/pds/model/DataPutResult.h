@@ -15,28 +15,26 @@
  */
 
 #pragma once
-#include <string>
 #include <alibabacloud/pds/PdsResult.h>
-#include <alibabacloud/pds/model/ObjectMetaData.h>
-#include <alibabacloud/pds/ServiceRequest.h>
+#include <alibabacloud/pds/Types.h>
 
 namespace AlibabaCloud
 {
 namespace PDS
 {
-    class ALIBABACLOUD_PDS_EXPORT GetObjectResult :public PdsObjectResult
+    class ALIBABACLOUD_PDS_EXPORT DataPutResult :public PdsDataResult
     {
     public:
-        GetObjectResult();
-        GetObjectResult(const std::shared_ptr<std::iostream>& content,
-            const HeaderCollection& headers);
-        GetObjectResult(const ObjectMetaData& metaData);
-        const ObjectMetaData& Metadata()  const { return metaData_; }
-        const std::shared_ptr<std::iostream>& Content() const { return content_; }
-        void setContent(const std::shared_ptr<std::iostream>& content) { content_ = content; }
-        void setMetaData(const ObjectMetaData& meta) { metaData_ = meta; }
-    private:
-        ObjectMetaData metaData_;
+        DataPutResult();
+        DataPutResult(const HeaderCollection& header);
+        DataPutResult(const HeaderCollection& header, const std::shared_ptr<std::iostream>& content);
+        DataPutResult(const std::string eTag, const uint64_t crc64) :eTag_(eTag), crc64_(crc64) {}
+        const std::string& ETag() const;
+        uint64_t CRC64();
+        const std::shared_ptr<std::iostream>& Content() const;
+     private:
+        std::string eTag_;
+        uint64_t crc64_;
         std::shared_ptr<std::iostream> content_;
     };
 }

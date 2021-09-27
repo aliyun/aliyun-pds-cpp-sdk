@@ -21,11 +21,12 @@
 #include "../external/json/json.h"
 #include "ModelError.h"
 #include <sstream>
+#include <alibabacloud/pds/Const.h>
+
 using namespace AlibabaCloud::PDS;
 
 FileGetUploadUrlRequest::FileGetUploadUrlRequest(const std::string& driveID, const std::string& fileID, const std::string& uploadID,
     const AlibabaCloud::PDS::PartInfoReqList& partInfoReqList):
-        PdsObjectRequest(),
         driveID_(driveID),
         fileID_(fileID),
         uploadID_(uploadID),
@@ -55,28 +56,12 @@ std::shared_ptr<std::iostream> FileGetUploadUrlRequest::Body() const
         index++;
     }
 
+    Json::StreamWriterBuilder builder;
+    builder.settings_["indentation"] = "";
+    std::shared_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
     auto content = std::make_shared<std::stringstream>();
-    *content << root;
+    writer->write(root, content.get());
     return content;
-}
-
-void FileGetUploadUrlRequest::setRange(int64_t start, int64_t end)
-{
-    range_[0] = start;
-    range_[1] = end;
-    rangeIsSet_ = true;
-}
-
-std::pair<int64_t, int64_t> FileGetUploadUrlRequest::Range() const
-{
-    int64_t begin = -1;
-    int64_t end = -1;
-    if (rangeIsSet_) {
-        begin = range_[0];
-        end = range_[1];
-    }
-
-    return std::pair<int64_t, int64_t>(begin, end);
 }
 
 void FileGetUploadUrlRequest::setTrafficLimit(uint64_t value)
@@ -89,9 +74,15 @@ void FileGetUploadUrlRequest::setUserAgent(const std::string& ua)
     userAgent_ = ua;
 }
 
-
-
 int FileGetUploadUrlRequest::validate() const
 {
+    if(partInfoReqList_.empty())
+        return ARG_ERROR_MULTIPARTUPLOAD_PARTLIST_EMPTY;
+
+    for (const PartInfoReq& part : partInfoReqList_) {
+        if(!(part.PartNumber() > 0 && part.PartNumber() < PartNumberUpperLimit)){
+            return ARG_ERROR_MULTIPARTUPLOAD_PARTNUMBER_RANGE;
+        }
+    }
     return 0;
 }

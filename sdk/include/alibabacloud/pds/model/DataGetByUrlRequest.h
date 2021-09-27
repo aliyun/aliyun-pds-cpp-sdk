@@ -18,31 +18,29 @@
 #include <alibabacloud/pds/Export.h>
 #include <alibabacloud/pds/PdsRequest.h>
 #include <alibabacloud/pds/Types.h>
-#include <alibabacloud/pds/model/PartInfoReq.h>
+#include <alibabacloud/pds/model/RequestMetaData.h>
+#include <alibabacloud/pds/http/HttpType.h>
 
 namespace AlibabaCloud
 {
 namespace PDS
 {
-    using PartInfoReqList = std::vector<PartInfoReq>;
-    class ALIBABACLOUD_PDS_EXPORT FileGetUploadUrlRequest: public PdsRequest
+    class ALIBABACLOUD_PDS_EXPORT DataGetByUrlRequest: public PdsRequest
     {
     public:
-        FileGetUploadUrlRequest(const std::string& driveID, const std::string& fileID, const std::string& uploadID,
-            const AlibabaCloud::PDS::PartInfoReqList& partInfoReqList);
-        std::string Path() const;
-        virtual std::shared_ptr<std::iostream> Body() const;
+        DataGetByUrlRequest(const std::string& url);
+        DataGetByUrlRequest(const std::string& url, const RequestMetaData& metaData);
+        void setUrl(const std::string& url);
+        void setRange(int64_t start, int64_t end);
         void setTrafficLimit(uint64_t value);
         void setUserAgent(const std::string& ua);
-        std::pair<int64_t, int64_t> Range() const;
     protected:
-        int validate() const;
+        virtual HeaderCollection specialHeaders() const ;
+        virtual int validate() const;
     private:
-        std::string driveID_;
-        std::string fileID_;
-        std::string uploadID_;
-        AlibabaCloud::PDS::PartInfoReqList partInfoReqList_;
-        std::string path_;
+        int64_t range_[2];
+        bool rangeIsSet_;
+        RequestMetaData metaData_;
         uint64_t trafficLimit_;
         std::string userAgent_;
     };

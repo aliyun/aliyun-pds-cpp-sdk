@@ -1,12 +1,12 @@
 /*
  * Copyright 2009-2017 Alibaba Cloud All rights reserved.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -46,7 +46,7 @@ class DefaultRetryStrategy : public RetryStrategy
 public:
 
     DefaultRetryStrategy(long maxRetries = 3, long scaleFactor = 300) :
-        m_scaleFactor(scaleFactor), m_maxRetries(maxRetries)  
+        m_scaleFactor(scaleFactor), m_maxRetries(maxRetries)
     {}
 
     bool shouldRetry(const Error & error, long attemptedRetries) const;
@@ -59,14 +59,16 @@ private:
 };
 
 bool DefaultRetryStrategy::shouldRetry(const Error & error, long attemptedRetries) const
-{    
+{
     if (attemptedRetries >= m_maxRetries)
         return false;
 
     long responseCode = error.Status();
 
-    //http code
-    if ((responseCode == 403 && error.Message().find("RequestTimeTooSkewed") != std::string::npos) ||
+    // http code
+    // accessToken expired, 429 too many requests
+    if ((responseCode == 401 && error.Code().compare("AccessTokenInvalid") == 0) ||
+        (responseCode == 429) ||
         (responseCode > 499 && responseCode < 599)) {
         return true;
     }
@@ -98,11 +100,11 @@ long DefaultRetryStrategy::calcDelayTimeMs(const Error & error, long attemptedRe
 
 //default for configuration end
 
-ClientConfiguration::ClientConfiguration() : 
-    userAgent(DefaultUserAgent()), 
-    scheme(Http::Scheme::HTTP), 
-    maxConnections(16), 
-    requestTimeoutMs(10000), 
+ClientConfiguration::ClientConfiguration() :
+    userAgent(DefaultUserAgent()),
+    scheme(Http::Scheme::HTTP),
+    maxConnections(16),
+    requestTimeoutMs(10000),
     connectTimeoutMs(5000),
     retryStrategy(std::make_shared<DefaultRetryStrategy>()),
     proxyScheme(Http::Scheme::HTTP),
@@ -110,7 +112,6 @@ ClientConfiguration::ClientConfiguration() :
     verifySSL(true),
     isCname(false),
     enableCrc64(true),
-    enableDateSkewAdjustment(true),
     sendRateLimiter(nullptr),
     recvRateLimiter(nullptr),
     executor(nullptr),

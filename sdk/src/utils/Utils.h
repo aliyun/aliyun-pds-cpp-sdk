@@ -65,70 +65,11 @@ namespace PDS
     std::string ToUtcTime(std::time_t &t);
     std::time_t UtcToUnixTime(const std::string &t);
 
-    bool IsIp(const std::string &host);
-    bool IsValidBucketName(const std::string &bucketName);
-    bool IsValidObjectKey(const std::string &key);
-    bool IsValidLoggingPrefix(const std::string &prefix);
-    bool IsValidChannelName(const std::string &channelName);
-    bool IsValidPlayListName(const std::string &playListName);
-    bool IsValidTagKey(const std::string &key);
-    bool IsValidTagValue(const std::string &value);
     bool IsValidEndpoint(const std::string &value);
+    std::string GetHostString(const std::string &endpoint);
 
     const std::string &LookupMimeType(const std::string& name);
-    std::string GetHostString(const std::string &endpoint);
-    std::string CombineHostString(const std::string &endpoint, const std::string &bucket, bool isCname);
-    std::string CombinePathString(const std::string &endpoint, const std::string &bucket, const std::string &key);
-    std::string CombineQueryString(const ParameterCollection &parameters);
-    std::string CombineRTMPString(const std::string &endpoint, const std::string &bucket, bool isCname);
-
 
     std::streampos GetIOStreamLength(std::iostream &stream);
-
-    const char *ToStorageClassName(StorageClass storageClass);
-    StorageClass ToStorageClassType(const char *name);
-
-    const char *ToAclName(CannedAccessControlList acl);
-    CannedAccessControlList ToAclType(const char *name);
-
-    const char * ToCopyActionName(CopyActionList action);
-
-    const char * ToRuleStatusName(RuleStatus status);
-    RuleStatus ToRuleStatusType(const char *name);
-
-    const char * ToLiveChannelStatusName(LiveChannelStatus status);
-    LiveChannelStatus ToLiveChannelStatusType(const char *name);
-
-    const char* ToRequestPayerName(RequestPayer payer);
-    RequestPayer ToRequestPayer(const char* name);
-    const char* ToSSEAlgorithmName(SSEAlgorithm sse);
-    SSEAlgorithm ToSSEAlgorithm(const char* name);
-
-    DataRedundancyType ToDataRedundancyType(const char* name);
-    const char* ToDataRedundancyTypeName(DataRedundancyType type);
-
-    const char * ToVersioningStatusName(VersioningStatus status);
-    VersioningStatus ToVersioningStatusType(const char *name);
-
-    const char* ToInventoryFormatName(InventoryFormat status);
-    InventoryFormat ToInventoryFormatType(const char* name);
-
-    const char* ToInventoryFrequencyName(InventoryFrequency status);
-    InventoryFrequency ToInventoryFrequencyType(const char* name);
-
-    const char* ToInventoryOptionalFieldName(InventoryOptionalField status);
-    InventoryOptionalField ToInventoryOptionalFieldType(const char* name);
-
-    const char* ToInventoryIncludedObjectVersionsName(InventoryIncludedObjectVersions status);
-    InventoryIncludedObjectVersions ToInventoryIncludedObjectVersionsType(const char* name);
-
-    std::string ToInventoryBucketFullName(const std::string& name);
-    std::string ToInventoryBucketShortName(const char* name);
-
-    const char * ToTierTypeName(TierType status);
-    TierType ToTierType(const char *name);
-
-    std::map<std::string, std::string> JsonStringToMap(const std::string& jsonStr);
-    std::string MapToJsonString(const std::map<std::string, std::string>& map);
 }
 }

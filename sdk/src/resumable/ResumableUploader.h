@@ -46,7 +46,7 @@ namespace PDS
     protected:
         virtual FileCreateOutcome FileCreateWrap(const FileCreateRequest &request) const;
         virtual FileGetUploadUrlOutcome FileGetUploadUrlWrap(const FileGetUploadUrlRequest &request) const;
-        virtual PutObjectOutcome UploadPartWrap(const PutObjectByUrlRequest &request) const;
+        virtual DataPutOutcome UploadPartWrap(const DataPutByUrlRequest &request) const;
         virtual FileListUploadedPartsOutcome ListUploadedPartsWrap(const FileListUploadedPartsRequest &request) const;
         virtual FileCompleteOutcome FileCompleteWrap(const FileCompleteRequest &request) const;
 

@@ -46,7 +46,7 @@ FileUploadRequest::FileUploadRequest(const std::string& driveID, const std::stri
         isFileExist_ = false;
     }
     mtime_ = ToGmtTime(lastMtime);
-    objectSize_ = static_cast<uint64_t>(fileSize);
+    fileSize_ = static_cast<uint64_t>(fileSize);
 }
 
 FileUploadRequest::FileUploadRequest(const std::string& driveID, const std::string& parentFileID,
@@ -85,9 +85,9 @@ FileUploadRequest::FileUploadRequest(const std::string& driveID, const std::stri
         isFileExist_ = false;
     }
     mtime_ = ToGmtTime(lastMtime);
-    objectSize_ = static_cast<uint64_t>(fileSize);
+    fileSize_ = static_cast<uint64_t>(fileSize);
 #else
-    objectSize_ = 0;
+    fileSize_ = 0;
     time_t lastMtime = 0;
     mtime_ = ToGmtTime(lastMtime);
     isFileExist_ = false;
@@ -105,6 +105,11 @@ FileUploadRequest::FileUploadRequest(const std::string& driveID, const std::stri
     const std::wstring &filePath) :
     FileUploadRequest(driveID, parentFileID, name, fileID, checkNameMode, filePath, L"", DefaultPartSize, DefaultResumableThreadNum)
 {}
+
+void FileUploadRequest::setUserTags(const AlibabaCloud::PDS::UserTagList& userTags)
+{
+    userTags_ = userTags;
+}
 
 int FileUploadRequest::validate() const
 {

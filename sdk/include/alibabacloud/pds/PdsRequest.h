@@ -43,26 +43,6 @@ namespace PDS
         virtual ParameterCollection specialParameters() const;
     };
 
-    class ALIBABACLOUD_PDS_EXPORT PdsObjectRequest : public PdsRequest
-    {
-    public:
-        PdsObjectRequest() :
-            PdsRequest(),
-            requestPayer_(AlibabaCloud::PDS::RequestPayer::NotSet),
-            versionId_()
-        {}
-        void setRequestPayer(AlibabaCloud::PDS::RequestPayer value);
-        AlibabaCloud::PDS::RequestPayer RequestPayer() const;
-        void setVersionId(const std::string& versionId);
-        const std::string& VersionId() const;
-    protected:
-        virtual int validate() const;
-        virtual HeaderCollection specialHeaders() const;
-        virtual ParameterCollection specialParameters() const;
-        AlibabaCloud::PDS::RequestPayer requestPayer_;
-        std::string versionId_;
-    };
-
     class ALIBABACLOUD_PDS_EXPORT PdsResumableBaseRequest : public PdsRequest
     {
     public:
@@ -70,7 +50,6 @@ namespace PDS
             PdsRequest(),
             partSize_(partSize),
             checkpointDir_(checkpointDir),
-            requestPayer_(AlibabaCloud::PDS::RequestPayer::NotSet),
             trafficLimit_(0),
             versionId_()
         {
@@ -81,7 +60,6 @@ namespace PDS
             PdsRequest(),
             partSize_(partSize),
             checkpointDirW_(checkpointDir),
-            requestPayer_(AlibabaCloud::PDS::RequestPayer::NotSet),
             trafficLimit_(0),
             versionId_()
         {
@@ -91,8 +69,8 @@ namespace PDS
         void setPartSize(uint64_t partSize);
         uint64_t PartSize() const;
 
-        void setObjectSize(uint64_t objectSize);
-        uint64_t ObjectSize() const;
+        void setFileSize(uint64_t fileSize);
+        uint64_t FileSize() const;
 
         void setThreadNum(uint32_t threadNum);
         uint32_t ThreadNum() const;
@@ -105,11 +83,8 @@ namespace PDS
 
         bool hasCheckpointDir() const;
 
-        void setObjectMtime(const std::string& mtime);
-        const std::string& ObjectMtime() const;
-
-        void setRequestPayer(RequestPayer value);
-        AlibabaCloud::PDS::RequestPayer RequestPayer() const;
+        void setFileMtime(const std::string& mtime);
+        const std::string& FileMtime() const;
 
         void setTrafficLimit(uint64_t value);
         uint64_t TrafficLimit() const;
@@ -125,12 +100,11 @@ namespace PDS
 
     protected:
         uint64_t partSize_;
-        uint64_t objectSize_;
+        uint64_t fileSize_;
         uint32_t threadNum_;
         std::string checkpointDir_;
         std::wstring checkpointDirW_;
         std::string mtime_;
-        AlibabaCloud::PDS::RequestPayer requestPayer_;
         uint64_t trafficLimit_;
         std::string versionId_;
     };

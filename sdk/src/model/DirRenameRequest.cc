@@ -46,8 +46,11 @@ std::shared_ptr<std::iostream> DirRenameRequest::Body() const
     root["name"] = name_;
     root["check_name_mode"] = checkNameMode_;
 
+    Json::StreamWriterBuilder builder;
+    builder.settings_["indentation"] = "";
+    std::shared_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
     auto content = std::make_shared<std::stringstream>();
-    *content << root;
+    writer->write(root, content.get());
     return content;
 }
 

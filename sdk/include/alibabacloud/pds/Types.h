@@ -28,48 +28,6 @@ namespace AlibabaCloud
 {
 namespace PDS
 {
-    enum StorageClass
-    {
-        Standard,       // Standard bucket
-        IA,             // Infrequent Access bucket
-        Archive,        // Archive bucket
-        ColdArchive     // Cold Archive bucket
-    };
-
-    enum CannedAccessControlList
-    {
-        Private = 0,
-        PublicRead,
-        PublicReadWrite,
-        Default
-    };
-
-    enum CopyActionList
-    {
-        Copy = 0,
-        Replace
-    };
-
-    enum EncodingType {
-        STRING_ANY,
-        URL,
-    };
-
-    enum RequestResponseHeader {
-        ContentType,
-        ContentLanguage,
-        Expires,
-        CacheControl,
-        ContentDisposition,
-        ContentEncoding,
-    };
-
-    enum RuleStatus
-    {
-        Enabled,
-        Disabled
-    };
-
     enum LogLevel
     {
         LogOff = 0,
@@ -80,82 +38,6 @@ namespace PDS
         LogDebug,
         LogTrace,
         LogAll,
-    };
-
-    enum LiveChannelStatus
-    {
-        EnabledStatus,
-        DisabledStatus,
-        IdleStatus,
-        LiveStatus,
-        UnknownStatus=99
-    };
-
-
-    enum class RequestPayer
-    {
-        NotSet = 0,
-        BucketOwner,
-        Requester
-    };
-
-    enum class SSEAlgorithm
-    {
-        NotSet = 0,
-        KMS,
-        AES256
-    };
-
-    enum class DataRedundancyType
-    {
-        NotSet = 0,
-        LRS,
-        ZRS
-    };
-
-    enum class VersioningStatus
-    {
-        NotSet,
-        Enabled,
-        Suspended
-    };
-
-    enum class InventoryFormat
-    {
-        NotSet,
-        CSV
-    };
-
-    enum class InventoryFrequency
-    {
-        NotSet,
-        Daily,
-        Weekly
-    };
-
-    enum class InventoryOptionalField
-    {
-        NotSet,
-        Size,
-        LastModifiedDate,
-        ETag,
-        StorageClass,
-        IsMultipartUploaded,
-        EncryptionStatus
-    };
-
-    enum class InventoryIncludedObjectVersions
-    {
-        NotSet,
-        All,
-        Current
-    };
-
-    enum class TierType
-    {
-        Expedited,
-        Standard,
-        Bulk
     };
 
     typedef void(*LogCallback)(LogLevel level, const std::string& stream);
@@ -195,7 +77,6 @@ namespace PDS
         void *UserData;
     };
 
-    using RefererList = std::vector<std::string>;
     using MetaData = std::map<std::string, std::string, caseInsensitiveLess>;
     using HeaderCollection = std::map<std::string, std::string, caseInsensitiveLess>;
     using ParameterCollection = std::map<std::string, std::string, caseSensitiveLess>;

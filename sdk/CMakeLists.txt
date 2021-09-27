@@ -53,8 +53,10 @@ file(GLOB sdk_model_common_src
 file(GLOB sdk_model_object_src
     "src/model/*AsyncTask*.cc"
 	"src/model/*Object*.cc"
+    "src/model/*Data*.cc"
     "src/model/*Dir*.cc"
     "src/model/*File*.cc"
+    "src/model/*Meta*.cc"
 	"src/model/InputFormat.cc"
 	"src/model/OutputFormat.cc"
 )

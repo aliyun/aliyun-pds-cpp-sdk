@@ -170,39 +170,52 @@ FileDeleteOutcome PdsClient::FileDelete(const FileDeleteRequest& request) const
 
 
 ////////////////////
-// Object
+// Data
 ////////////////////
-GetObjectOutcome PdsClient::GetObjectByUrl(const GetObjectByUrlRequest &request) const
+DataGetOutcome PdsClient::DataGetByUrl(const DataGetByUrlRequest &request) const
 {
-    return client_->GetObjectByUrl(request);
+    return client_->DataGetByUrl(request);
 }
 
-GetObjectOutcome PdsClient::GetObjectByUrl(const std::string &url) const
+DataGetOutcome PdsClient::DataGetByUrl(const std::string &url) const
 {
-    return client_->GetObjectByUrl(GetObjectByUrlRequest(url));
+    return client_->DataGetByUrl(DataGetByUrlRequest(url));
 }
 
-GetObjectOutcome PdsClient::GetObjectByUrl(const std::string &url, const std::string &file) const
+DataGetOutcome PdsClient::DataGetByUrl(const std::string &url, const std::string &file) const
 {
-    GetObjectByUrlRequest request(url);
+    DataGetByUrlRequest request(url);
     request.setResponseStreamFactory([=]() {return std::make_shared<std::fstream>(file, std::ios_base::out | std::ios_base::in | std::ios_base::trunc); });
-    return client_->GetObjectByUrl(request);
+    return client_->DataGetByUrl(request);
 }
 
-PutObjectOutcome PdsClient::PutObjectByUrl(const PutObjectByUrlRequest &request) const
+DataPutOutcome PdsClient::DataPutByUrl(const DataPutByUrlRequest &request) const
 {
-    return client_->PutObjectByUrl(request);
+    return client_->DataPutByUrl(request);
 }
 
-PutObjectOutcome PdsClient::PutObjectByUrl(const std::string &url, const std::string &file) const
+DataPutOutcome PdsClient::DataPutByUrl(const std::string &url, const std::string &file) const
 {
     std::shared_ptr<std::iostream> content = std::make_shared<std::fstream>(file, std::ios::in|std::ios::binary);
-    return client_->PutObjectByUrl(PutObjectByUrlRequest(url, content));
+    return client_->DataPutByUrl(DataPutByUrlRequest(url, content));
 }
 
-PutObjectOutcome PdsClient::PutObjectByUrl(const std::string &url, const std::shared_ptr<std::iostream> &content) const
+DataPutOutcome PdsClient::DataPutByUrl(const std::string &url, const std::shared_ptr<std::iostream> &content) const
 {
-    return client_->PutObjectByUrl(PutObjectByUrlRequest(url, content));
+    return client_->DataPutByUrl(DataPutByUrlRequest(url, content));
+}
+
+////////////////////
+// Meta
+////////////////////
+MetaUserTagsPutOutcome PdsClient::MetaUserTagsPut(const MetaUserTagsPutRequest &request) const
+{
+    return client_->MetaUserTagsPut(request);
+}
+
+PdsOutcome PdsClient::MetaUserTagsDelete(const MetaUserTagsDeleteRequest &request) const
+{
+    return client_->MetaUserTagsDelete(request);
 }
 
 
@@ -215,7 +228,7 @@ FileCompleteOutcome PdsClient::ResumableFileUpload(const FileUploadRequest &requ
 }
 
 
-GetObjectOutcome PdsClient::ResumableFileDownload(const FileDownloadRequest &request) const
+DataGetOutcome PdsClient::ResumableFileDownload(const FileDownloadRequest &request) const
 {
     return client_->ResumableFileDownload(request);
 }

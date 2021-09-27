@@ -68,17 +68,21 @@ namespace PDS
         FileTrashOutcome FileTrash(const FileTrashRequest& request) const;
         FileDeleteOutcome FileDelete(const FileDeleteRequest& request) const;
 
-        /*Object*/
-        GetObjectOutcome GetObjectByUrl(const GetObjectByUrlRequest& request) const;
-        GetObjectOutcome GetObjectByUrl(const std::string& url) const;
-        GetObjectOutcome GetObjectByUrl(const std::string& url, const std::string& file) const;
-        PutObjectOutcome PutObjectByUrl(const PutObjectByUrlRequest& request) const;
-        PutObjectOutcome PutObjectByUrl(const std::string& url, const std::string& file) const;
-        PutObjectOutcome PutObjectByUrl(const std::string& url, const std::shared_ptr<std::iostream>& content) const;
+        /*Data*/
+        DataGetOutcome DataGetByUrl(const DataGetByUrlRequest& request) const;
+        DataGetOutcome DataGetByUrl(const std::string& url) const;
+        DataGetOutcome DataGetByUrl(const std::string& url, const std::string& file) const;
+        DataPutOutcome DataPutByUrl(const DataPutByUrlRequest& request) const;
+        DataPutOutcome DataPutByUrl(const std::string& url, const std::string& file) const;
+        DataPutOutcome DataPutByUrl(const std::string& url, const std::shared_ptr<std::iostream>& content) const;
+
+        /*Meta*/
+        MetaUserTagsPutOutcome MetaUserTagsPut(const MetaUserTagsPutRequest& request) const;
+        PdsOutcome MetaUserTagsDelete(const MetaUserTagsDeleteRequest& request) const;
 
         /*Resumable Operation*/
         FileCompleteOutcome ResumableFileUpload(const FileUploadRequest& request) const;
-        GetObjectOutcome ResumableFileDownload(const FileDownloadRequest& request) const;
+        DataGetOutcome ResumableFileDownload(const FileDownloadRequest& request) const;
 
         /*Requests control*/
         void DisableRequest();

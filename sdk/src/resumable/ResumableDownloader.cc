@@ -20,6 +20,7 @@
 #include <alibabacloud/pds/Const.h>
 #include "../utils/Utils.h"
 #include "../utils/LogUtils.h"
+#include "../utils/Crc64.h"
 #include "../utils/FileSystemUtils.h"
 #include "../external/json/json.h"
 #include "ResumableDownloader.h"
@@ -27,24 +28,24 @@
 
 using namespace AlibabaCloud::PDS;
 
-GetObjectOutcome ResumableDownloader::Download()
+DataGetOutcome ResumableDownloader::Download()
 {
     PdsError err;
 
     if (0 != validate(err)) {
-        return GetObjectOutcome(err);
+        return DataGetOutcome(err);
     }
 
     PartRecordList partsToDownload;
     if (getPartsToDownload(err, partsToDownload) != 0) {
-        return GetObjectOutcome(err);
+        return DataGetOutcome(err);
     }
 
     if (url_.empty()) {
         FileGetRequest getRequest(record_.driveID, record_.fileID);
         auto fileGetOutcome = FileGetWrap(getRequest);
         if (!fileGetOutcome.isSuccess()) {
-            return GetObjectOutcome(fileGetOutcome.error());
+            return DataGetOutcome(fileGetOutcome.error());
         }
         url_ = fileGetOutcome.result().Url();
     }
@@ -54,7 +55,7 @@ GetObjectOutcome ResumableDownloader::Download()
     if (hasRecord_) {
         downloadedParts = record_.parts;
     }
-    std::vector<GetObjectOutcome> outcomes;
+    std::vector<DataGetOutcome> outcomes;
     std::vector<std::thread> threadPool;
 
     for (uint32_t i = 0; i < request_.ThreadNum(); i++) {
@@ -76,23 +77,25 @@ GetObjectOutcome ResumableDownloader::Download()
                 uint64_t start = part.offset;
                 uint64_t end = start + part.size - 1;
 
-                auto getObjectReq = GetObjectByUrlRequest(url_);
-                getObjectReq.setResponseStreamFactory([=]() {
+                auto getDataReq = DataGetByUrlRequest(url_);
+                getDataReq.setResponseStreamFactory([=]() {
                     auto tmpFstream = GetFstreamByPath(request_.TempFilePath(), request_.TempFilePathW(),
                         std::ios_base::in | std::ios_base::out | std::ios_base::binary);
                     tmpFstream->seekp(pos, tmpFstream->beg);
                     return tmpFstream;
                 });
-                getObjectReq.setRange(start, end);
+                getDataReq.setRange(start, end);
+                getDataReq.setFlags(getDataReq.Flags() | REQUEST_FLAG_CHECK_CRC64 | REQUEST_FLAG_SAVE_CLIENT_CRC64);
+
                 auto process = request_.TransferProgress();
                 if (process.Handler) {
                     TransferProgress uploadPartProcess = { DownloadPartProcessCallback, (void *)this };
-                    getObjectReq.setTransferProgress(uploadPartProcess);
+                    getDataReq.setTransferProgress(uploadPartProcess);
                 }
                 if (request_.TrafficLimit() != 0) {
-                    getObjectReq.setTrafficLimit(request_.TrafficLimit());
+                    getDataReq.setTrafficLimit(request_.TrafficLimit());
                 }
-                auto outcome = GetObjectByUrlWrap(getObjectReq);
+                auto outcome = DataGetByUrlWrap(getDataReq);
 
                 // lock
                 bool needRetry = false;
@@ -104,25 +107,26 @@ GetObjectOutcome ResumableDownloader::Download()
                         if (!fileGetOutcome.isSuccess()) {
                             outcomes.push_back(fileGetOutcome.error());
                         }
+                        // TODO: 文件content-hash
                         url_ = fileGetOutcome.result().Url();
                         needRetry = true;
                     }
                 }
                 if (needRetry){
-                    getObjectReq.setUrl(url_);
-                    getObjectReq.setResponseStreamFactory([=]() {
+                    getDataReq.setUrl(url_);
+                    getDataReq.setResponseStreamFactory([=]() {
                         auto tmpFstream = GetFstreamByPath(request_.TempFilePath(), request_.TempFilePathW(),
                             std::ios_base::in | std::ios_base::out | std::ios_base::binary);
                         tmpFstream->seekp(pos, tmpFstream->beg);
                         return tmpFstream;
                     });
-                    outcome = GetObjectByUrlWrap(getObjectReq);
+                    outcome = DataGetByUrlWrap(getDataReq);
                 }
 #ifdef ENABLE_PDS_TEST
                 if (!!(request_.Flags() & 0x40000000) && part.partNumber == 2) {
-                    const char* TAG = "ResumableDownloadObjectClient";
+                    const char* TAG = "ResumableDownloadClient";
                     PDS_LOG(LogLevel::LogDebug, TAG, "NO.2 part data download failed.");
-                    outcome = GetObjectOutcome();
+                    outcome = DataGetOutcome();
                 }
 #endif // ENABLE_PDS_TEST
 
@@ -130,6 +134,7 @@ GetObjectOutcome ResumableDownloader::Download()
                 {
                     std::lock_guard<std::mutex> lck(lock_);
                     if (outcome.isSuccess()) {
+                        part.crc64 = std::strtoull(outcome.result().Metadata().HttpMetaData().at("x-oss-hash-crc64ecma-by-client").c_str(), nullptr, 10);
                         downloadedParts.push_back(part);
                     }
                     outcomes.push_back(outcome);
@@ -153,6 +158,7 @@ GetObjectOutcome ResumableDownloader::Download()
                         for (PartRecord& partR : record.parts) {
                             root["parts"][index]["partNumber"] = partR.partNumber;
                             root["parts"][index]["size"] = partR.size;
+                            root["parts"][index]["crc64"] = partR.crc64;
                             index++;
                         }
 
@@ -160,11 +166,6 @@ GetObjectOutcome ResumableDownloader::Download()
                         ss << root;
                         std::string md5Sum = ComputeContentETag(ss);
                         root["md5Sum"] = md5Sum;
-
-                        if (request_.RangeIsSet()) {
-                            root["rangeStart"] = record.rangeStart;
-                            root["rangeEnd"] = record.rangeEnd;
-                        }
 
                         auto recordStream = GetFstreamByPath(recordPath_, recordPathW_, std::ios::out);
                         if (recordStream->is_open()) {
@@ -186,37 +187,46 @@ GetObjectOutcome ResumableDownloader::Download()
     std::shared_ptr<std::iostream> content = nullptr;
     for (auto& outcome : outcomes) {
         if (!outcome.isSuccess()) {
-            return GetObjectOutcome(outcome.error());
+            return DataGetOutcome(outcome.error());
         }
         outcome.result().setContent(content);
     }
 
     if (!client_->isEnableRequest()) {
-        return GetObjectOutcome(PdsError("ClientError:100002", "Disable all requests by upper."));
+        return DataGetOutcome(PdsError("ClientError:100002", "Disable all requests by upper."));
     }
 
     if (downloadedParts.size() < outcomes.size()) {
-        return GetObjectOutcome(PdsError("DownloadNotComplete", "Not all parts are downloaded."));
+        return DataGetOutcome(PdsError("DownloadNotComplete", "Not all parts are downloaded."));
     }
 
-    ObjectMetaData meta;
-    if (!outcomes.empty()) {
-        meta = outcomes[0].result().Metadata();
+    std::sort(downloadedParts.begin(), downloadedParts.end(), [&](const PartRecord& a, const PartRecord& b)
+    {
+        return a.partNumber < b.partNumber;
+    });
+
+    //check crc64
+    if (client_->configuration().enableCrc64) {
+        uint64_t localCRC64 = downloadedParts[0].crc64;
+        for (size_t i = 1; i < downloadedParts.size(); i++) {
+            localCRC64 = CRC64::CombineCRC(localCRC64, downloadedParts[i].crc64, downloadedParts[i].size);
+        }
+        uint64_t serverCRC64 = std::strtoull(crc64Hash_.c_str(), nullptr, 10);
+        if (localCRC64 != serverCRC64) {
+            return DataGetOutcome(PdsError("CrcCheckError", "ResumableDownload data CRC checksum fail."));
+        }
     }
-    meta.setContentLength(contentLength_);
 
     if (!renameTempFile()) {
         std::stringstream ss;
         ss << "rename temp file failed";
-        return GetObjectOutcome(PdsError("RenameError", ss.str()));
+        return DataGetOutcome(PdsError("RenameError", ss.str()));
     }
-
-    // TODO: 文件校验
 
     removeRecordFile();
 
-    GetObjectResult result;
-    return GetObjectOutcome(result);
+    DataGetResult result;
+    return DataGetOutcome(result);
 }
 
 int ResumableDownloader::prepare(PdsError& err)
@@ -243,11 +253,6 @@ int ResumableDownloader::prepare(PdsError& err)
         std::string md5Sum = ComputeContentETag(ss);
         root["md5Sum"] = md5Sum;
 
-        if (request_.RangeIsSet()) {
-            root["rangeStart"] = record_.rangeStart;
-            root["rangeEnd"] = record_.rangeEnd;
-        }
-
         auto recordStream = GetFstreamByPath(recordPath_, recordPathW_, std::ios::out);
         if (recordStream->is_open()) {
             *recordStream << root;
@@ -261,15 +266,9 @@ int ResumableDownloader::validateRecord()
 {
     auto record = record_;
 
-    if (record.size != objectSize_ || record.mtime != request_.ObjectMtime() ||
+    if (record.size != fileSize_ || record.mtime != request_.FileMtime() ||
         record.contentHash != contentHash_) {
-        return ARG_ERROR_DOWNLOAD_OBJECT_MODIFIED;
-    }
-
-    if (request_.RangeIsSet()) {
-        if (record.rangeStart != request_.RangeStart() || record.rangeEnd != request_.RangeEnd()) {
-            return ARG_ERROR_RANGE_HAS_BEEN_RESET;
-        }
+        return ARG_ERROR_DOWNLOAD_SOURCE_FILE_MODIFIED;
     }
 
     Json::Value root;
@@ -286,12 +285,8 @@ int ResumableDownloader::validateRecord()
     for (PartRecord& part : record.parts) {
         root["parts"][index]["partNumber"] = part.partNumber;
         root["parts"][index]["size"] = part.size;
+        root["parts"][index]["crc64"] = part.crc64;
         index++;
-    }
-
-    if (!(record.rangeStart == 0 && record.rangeEnd == -1)) {
-        root["rangeStart"] = record.rangeStart;
-        root["rangeEnd"] = record.rangeEnd;
     }
 
     std::stringstream recordStream;
@@ -330,20 +325,10 @@ int ResumableDownloader::loadRecord()
             Json::Value partValue = root["parts"][i];
             part.partNumber = partValue["partNumber"].asInt();
             part.size = partValue["size"].asInt64();
+            part.crc64 = partValue["crc64"].asUInt64();
             record_.parts.push_back(part);
         }
         record_.md5Sum = root["md5Sum"].asString();
-
-        if (root["rangeStart"] != Json::nullValue && root["rangeEnd"] != Json::nullValue) {
-            record_.rangeStart = root["rangeStart"].asInt64();
-            record_.rangeEnd = root["rangeEnd"].asInt64();
-        }
-        else if(root["rangeStart"] == Json::nullValue && root["rangeEnd"] == Json::nullValue){
-            record_.rangeStart = 0;
-            record_.rangeEnd = -1;
-        }else {
-            return ARG_ERROR_INVALID_RANGE_IN_DWONLOAD_RECORD;
-        }
 
         partSize_ = record_.partSize;
         hasRecord_ = true;
@@ -391,16 +376,7 @@ int ResumableDownloader::getPartsToDownload(PdsError &err, PartRecordList &parts
     }
 
     int64_t start = 0;
-    int64_t end = objectSize_ - 1;
-
-    if (request_.RangeIsSet()) {
-        start = request_.RangeStart();
-        end = request_.RangeEnd();
-        if (end == -1) {
-            end = objectSize_ - 1;
-        }
-        contentLength_ = end - start + 1;
-    }
+    int64_t end = fileSize_ - 1;
 
     int32_t index = 1;
     for (int64_t offset = start; offset < end + 1; offset += partSize_, index++) {
@@ -434,19 +410,9 @@ void ResumableDownloader::initRecord()
     record_.fileID = request_.FileID();
     record_.contentHash = contentHash_;
     record_.filePath = filePath;
-    record_.mtime = request_.ObjectMtime();
-    record_.size = objectSize_;
+    record_.mtime = request_.FileMtime();
+    record_.size = fileSize_;
     record_.partSize = partSize_;
-
-    //in this place we shuold consider the condition that range is not set
-    if (request_.RangeIsSet()) {
-        record_.rangeStart = request_.RangeStart();
-        record_.rangeEnd = request_.RangeEnd();
-    }
-    else {
-        record_.rangeStart = 0;
-        record_.rangeEnd = -1;
-    }
 }
 
 void ResumableDownloader::DownloadPartProcessCallback(size_t increment, int64_t transfered, int64_t total, void *userData)
@@ -460,7 +426,7 @@ void ResumableDownloader::DownloadPartProcessCallback(size_t increment, int64_t 
 
     auto process = downloader->request_.TransferProgress();
     if (process.Handler) {
-        process.Handler(increment, downloader->consumedSize_, downloader->contentLength_, process.UserData);
+        process.Handler(increment, downloader->consumedSize_, downloader->fileSize_, process.UserData);
     }
 }
 
@@ -482,8 +448,8 @@ FileGetOutcome ResumableDownloader::FileGetWrap(const FileGetRequest &request) c
     return client_->FileGet(request);
 }
 
-GetObjectOutcome ResumableDownloader::GetObjectByUrlWrap(const GetObjectByUrlRequest &request) const
+DataGetOutcome ResumableDownloader::DataGetByUrlWrap(const DataGetByUrlRequest &request) const
 {
-    return client_->GetObjectByUrl(request);
+    return client_->DataGetByUrl(request);
 }
 

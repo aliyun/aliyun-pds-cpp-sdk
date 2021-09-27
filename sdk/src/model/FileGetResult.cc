@@ -64,6 +64,19 @@ FileGetResult::FileGetResult(
     updatedAT_ = root["updated_at"].asString();
     url_ = root["url"].asString();
     uploadID_ = root["upload_id"].asString();
+
+    if (root.isMember("user_tags")) {
+        Json::Value tags = root["user_tags"];
+        Json::Value::Members members;
+        members = tags.getMemberNames();
+        for (Json::Value::Members::iterator iter = members.begin(); iter != members.end(); iter++) {
+            std::string key = *iter;
+            if (tags[key.c_str()].isString()) {
+                std::string value = tags[key.c_str()].asString();
+                userTags_[key] = value;
+            }
+        }
+    }
 }
 
 void FileGetResult::PrintString()
@@ -85,4 +98,9 @@ void FileGetResult::PrintString()
         ", updated_at: " << updatedAT_ <<
         ", url: " << url_ <<
         ", upload_id: " << uploadID_ <<std::endl;
+
+    for (auto iter = userTags_.begin(); iter != userTags_.end() ;iter++) {
+        std::cout << "------ key: " << iter->first <<
+        ", value:" << iter->second << std::endl;
+    }
 }

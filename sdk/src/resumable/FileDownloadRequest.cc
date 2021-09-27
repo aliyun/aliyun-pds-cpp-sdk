@@ -30,7 +30,6 @@ FileDownloadRequest::FileDownloadRequest(const std::string& driveID, const std::
     PdsResumableBaseRequest(checkpointDir, partSize, threadNum),
     driveID_(driveID),
     fileID_(fileID),
-    rangeIsSet_(false),
     filePath_(filePath)
 {
     tempFilePath_ = filePath + ".temp";
@@ -53,20 +52,19 @@ FileDownloadRequest::FileDownloadRequest(const std::string& driveID, const std::
     PdsResumableBaseRequest(checkpointDir, partSize, threadNum),
     driveID_(driveID),
     fileID_(fileID),
-    rangeIsSet_(false),
     filePathW_(filePath)
 {
     tempFilePathW_ = filePath + L".temp";
 }
 
-FileDownloadRequest::FileDownloadRequest(const std::string &bucket, const std::string &key,
+FileDownloadRequest::FileDownloadRequest(const std::string &driveID, const std::string &fileID,
     const std::wstring &filePath, const std::wstring &checkpointDir) :
-    FileDownloadRequest(bucket, key, filePath, checkpointDir, DefaultPartSize, DefaultResumableThreadNum)
+    FileDownloadRequest(driveID, fileID, filePath, checkpointDir, DefaultPartSize, DefaultResumableThreadNum)
 {}
 
-FileDownloadRequest::FileDownloadRequest(const std::string &bucket, const std::string &key,
+FileDownloadRequest::FileDownloadRequest(const std::string &driveID, const std::string &fileID,
     const std::wstring &filePath) :
-    FileDownloadRequest(bucket, key, filePath, L"", DefaultPartSize, DefaultResumableThreadNum)
+    FileDownloadRequest(driveID, fileID, filePath, L"", DefaultPartSize, DefaultResumableThreadNum)
 {}
 
 void FileDownloadRequest::setModifiedSinceConstraint(const std::string &value)
@@ -94,10 +92,6 @@ int FileDownloadRequest::validate() const
     auto ret = PdsResumableBaseRequest::validate();
     if (ret != 0) {
         return ret;
-    }
-
-    if (rangeIsSet_ && (range_[0] < 0 || range_[1] < -1 || (range_[1] > -1 && range_[1] < range_[0]))) {
-        return ARG_ERROR_INVALID_RANGE;
     }
 
 #if !defined(_WIN32)

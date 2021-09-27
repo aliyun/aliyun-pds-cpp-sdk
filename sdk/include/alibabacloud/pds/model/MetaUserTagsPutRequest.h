@@ -18,33 +18,27 @@
 #include <alibabacloud/pds/Export.h>
 #include <alibabacloud/pds/PdsRequest.h>
 #include <alibabacloud/pds/Types.h>
-#include <alibabacloud/pds/model/PartInfoReq.h>
+#include <alibabacloud/pds/model/MetaUserTag.h>
 
 namespace AlibabaCloud
 {
 namespace PDS
 {
-    using PartInfoReqList = std::vector<PartInfoReq>;
-    class ALIBABACLOUD_PDS_EXPORT FileGetUploadUrlRequest: public PdsRequest
+    using UserTagList = std::vector<UserTag>;
+    class ALIBABACLOUD_PDS_EXPORT MetaUserTagsPutRequest: public PdsRequest
     {
     public:
-        FileGetUploadUrlRequest(const std::string& driveID, const std::string& fileID, const std::string& uploadID,
-            const AlibabaCloud::PDS::PartInfoReqList& partInfoReqList);
+        MetaUserTagsPutRequest(const std::string& driveID, const std::string& fileID,
+            const AlibabaCloud::PDS::UserTagList& userTags);
         std::string Path() const;
         virtual std::shared_ptr<std::iostream> Body() const;
-        void setTrafficLimit(uint64_t value);
-        void setUserAgent(const std::string& ua);
-        std::pair<int64_t, int64_t> Range() const;
     protected:
         int validate() const;
     private:
         std::string driveID_;
         std::string fileID_;
-        std::string uploadID_;
-        AlibabaCloud::PDS::PartInfoReqList partInfoReqList_;
         std::string path_;
-        uint64_t trafficLimit_;
-        std::string userAgent_;
+        AlibabaCloud::PDS::UserTagList userTags_;
     };
 }
 }

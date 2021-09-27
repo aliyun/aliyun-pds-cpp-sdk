@@ -21,6 +21,8 @@
 #include "../external/json/json.h"
 #include "ModelError.h"
 #include <sstream>
+#include <alibabacloud/pds/Const.h>
+
 using namespace AlibabaCloud::PDS;
 
 FileCreateRequest::FileCreateRequest(const std::string& driveID, const std::string& parentFileID, const std::string& name,
@@ -63,8 +65,11 @@ std::shared_ptr<std::iostream> FileCreateRequest::Body() const
         index++;
     }
 
+    Json::StreamWriterBuilder builder;
+    builder.settings_["indentation"] = "";
+    std::shared_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
     auto content = std::make_shared<std::stringstream>();
-    *content << root;
+    writer->write(root, content.get());
     return content;
 }
 
@@ -75,5 +80,10 @@ void FileCreateRequest::setPartInfoList(const AlibabaCloud::PDS::PartInfoReqList
 
 int FileCreateRequest::validate() const
 {
+    for (const PartInfoReq& part : partInfoReqList_) {
+        if(!(part.PartNumber() > 0 && part.PartNumber() < PartNumberUpperLimit)){
+            return ARG_ERROR_MULTIPARTUPLOAD_PARTNUMBER_RANGE;
+        }
+    }
     return 0;
 }

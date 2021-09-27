@@ -44,32 +44,6 @@ DirListResult::DirListResult(
 
         FileItem item;
         item.ParseFromJson(jValue);
-        /*
-        item.Category = jValue["category"].asString();
-        item.ContentHash = jValue["content_hash"].asString();
-        item.ContentHashName = jValue["content_hash_name"].asString();
-        item.ContentType = jValue["content_type"].asString();
-        item.Crc64Hash = jValue["crc64_hash"].asString();
-        item.CreatedAt = jValue["created_at"].asString();
-        item.Description = jValue["description"].asString();
-        item.DomainID = jValue["domain_id"].asString();
-        item.DownloadUrl = jValue["download_url"].asString();
-        item.DriveID = jValue["drive_id"].asString();
-        item.EncryptMode = jValue["encrypt_mode"].asString();
-        item.FileExtension = jValue["file_extension"].asString();
-        item.FileID = jValue["file_id"].asString();
-        item.Hidden = jValue["hidden"].asBool();
-        item.Name = jValue["name"].asString();
-        item.ParentFileID = jValue["parent_file_id"].asString();
-        item.PunishFlag = jValue["punish_flag"].asInt64();
-        item.Size = jValue["size"].asInt64();
-        item.Starred = jValue["starred"].asBool();
-        item.Status = jValue["status"].asString();
-        item.Type = jValue["type"].asString();
-        item.UpdatedAT = jValue["updated_at"].asString();
-        item.Url = jValue["url"].asString();
-        */
-
         fileItemList_.push_back(item);
     }
 }

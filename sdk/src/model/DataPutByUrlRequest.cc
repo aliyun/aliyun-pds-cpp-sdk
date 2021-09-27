@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include <alibabacloud/pds/model/PutObjectByUrlRequest.h>
+#include <alibabacloud/pds/model/DataPutByUrlRequest.h>
 #include <sstream>
 #include <iostream>
 #include "../utils/Utils.h"
@@ -23,18 +23,17 @@
 
 using namespace AlibabaCloud::PDS;
 
-PutObjectByUrlRequest::PutObjectByUrlRequest(
+DataPutByUrlRequest::DataPutByUrlRequest(
     const std::string &url,
     const std::shared_ptr<std::iostream> &content) :
-    PutObjectByUrlRequest(url, content, ObjectMetaData())
+    DataPutByUrlRequest(url, content, RequestMetaData())
 {
 }
 
-PutObjectByUrlRequest::PutObjectByUrlRequest(
+DataPutByUrlRequest::DataPutByUrlRequest(
     const std::string &url,
     const std::shared_ptr<std::iostream> &content,
-    const ObjectMetaData &metaData) :
-    PdsObjectRequest(),
+    const RequestMetaData &metaData) :
     content_(content),
     metaData_(metaData),
     contentLengthIsSet_(false),
@@ -42,38 +41,38 @@ PutObjectByUrlRequest::PutObjectByUrlRequest(
     userAgent_()
 {
     setPath(url);
-    setFlags(Flags()|REQUEST_FLAG_PARAM_IN_PATH|REQUEST_FLAG_CHECK_CRC64|REQUEST_FLAG_OSS_DATA_REQUEST);
+    setFlags(Flags()|REQUEST_FLAG_PARAM_IN_PATH|REQUEST_FLAG_CHECK_CRC64|REQUEST_FLAG_PDS_DATA_REQUEST);
 }
 
-void PutObjectByUrlRequest::setContentLength(uint64_t length)
+void DataPutByUrlRequest::setContentLength(uint64_t length)
 {
     contentLength_ = length;
     contentLengthIsSet_ = true;
 }
 
-void PutObjectByUrlRequest::setTrafficLimit(uint64_t value)
+void DataPutByUrlRequest::setTrafficLimit(uint64_t value)
 {
     trafficLimit_ = value;
 }
 
-void PutObjectByUrlRequest::setUserAgent(const std::string& ua)
+void DataPutByUrlRequest::setUserAgent(const std::string& ua)
 {
     userAgent_ = ua;
 }
 
-void PutObjectByUrlRequest::setContent(const std::shared_ptr<std::iostream> &content)
+void DataPutByUrlRequest::setContent(const std::shared_ptr<std::iostream> &content)
 {
     content_ = content;
 }
 
-std::shared_ptr<std::iostream> PutObjectByUrlRequest::Body() const
+std::shared_ptr<std::iostream> DataPutByUrlRequest::Body() const
 {
     return content_;
 }
 
-HeaderCollection PutObjectByUrlRequest::specialHeaders() const
+HeaderCollection DataPutByUrlRequest::specialHeaders() const
 {
-    auto headers = PdsObjectRequest::specialHeaders();
+    auto headers = PdsRequest::specialHeaders();
     headers[Http::CONTENT_TYPE] = "";
     if (contentLengthIsSet_) {
         headers[Http::CONTENT_LENGTH] = std::to_string(contentLength_);
@@ -87,9 +86,9 @@ HeaderCollection PutObjectByUrlRequest::specialHeaders() const
     return headers;
 }
 
-int PutObjectByUrlRequest::validate() const
+int DataPutByUrlRequest::validate() const
 {
-    int ret = PdsObjectRequest::validate();
+    int ret = PdsRequest::validate();
     if (ret)
     {
         return ret;

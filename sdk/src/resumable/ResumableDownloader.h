@@ -26,6 +26,7 @@ namespace PDS
         int64_t partNumber;
         int64_t offset;
         int64_t size;
+        uint64_t crc64;
     };
     typedef std::vector<PartRecord> PartRecordList;
     struct DownloadRecord {
@@ -33,32 +34,31 @@ namespace PDS
         std::string driveID;
         std::string fileID;
         std::string contentHash;
+        std::string crc64Hash;
         std::string filePath;
         std::string mtime;
         uint64_t size;
         uint64_t partSize;
         PartRecordList parts;
         std::string md5Sum;
-        int64_t rangeStart;
-        int64_t rangeEnd;
     };
 
 
     class ResumableDownloader : public ResumableBaseWorker
     {
     public:
-        ResumableDownloader(const FileDownloadRequest& request, const PdsClientImpl *client, uint64_t objectSize,
-            std::string contentHash, std::string url):
-            ResumableBaseWorker(objectSize, request.PartSize()),
+        ResumableDownloader(const FileDownloadRequest& request, const PdsClientImpl *client, uint64_t fileSize,
+            std::string contentHash, std::string crc64Hash, std::string url):
+            ResumableBaseWorker(fileSize, request.PartSize()),
             request_(request),
             client_(client),
-            contentLength_(objectSize),
             contentHash_(contentHash),
+            crc64Hash_(crc64Hash),
             url_(url)
         {
         }
 
-        GetObjectOutcome Download();
+        DataGetOutcome Download();
 
     protected:
         void genRecordPath();
@@ -71,13 +71,13 @@ namespace PDS
         static void DownloadPartProcessCallback(size_t increment, int64_t transfered, int64_t total, void *userData);
 
         virtual FileGetOutcome FileGetWrap(const FileGetRequest &request) const;
-        virtual GetObjectOutcome GetObjectByUrlWrap(const GetObjectByUrlRequest &request) const;
+        virtual DataGetOutcome DataGetByUrlWrap(const DataGetByUrlRequest &request) const;
 
         const FileDownloadRequest request_;
         DownloadRecord record_;
         const PdsClientImpl *client_;
-        uint64_t contentLength_;
         std::string contentHash_;
+        std::string crc64Hash_;
         std::string url_;
     };
 }

@@ -43,8 +43,11 @@ std::shared_ptr<std::iostream> FileCompleteRequest::Body() const
     root["file_id"] = fileID_;
     root["upload_id"] = uploadID_;
 
+    Json::StreamWriterBuilder builder;
+    builder.settings_["indentation"] = "";
+    std::shared_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
     auto content = std::make_shared<std::stringstream>();
-    *content << root;
+    writer->write(root, content.get());
     return content;
 }
 

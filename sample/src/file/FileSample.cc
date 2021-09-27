@@ -31,7 +31,7 @@ std::string FileSample::FileCreate()
 {
     // PDS create
     std::string fileID;
-    FileCreateRequest createRequest(Config::DriveID, Config::RootParentID, "test_file", "", "refuse", 3);
+    FileCreateRequest createRequest(Config::DriveID, Config::RootParentID, "test_file", "", "auto_rename", 3);
     auto createOutcome = client->FileCreate(createRequest);
     if (!createOutcome.isSuccess()) {
         PrintError(__FUNCTION__, createOutcome.error());
@@ -66,13 +66,13 @@ std::string FileSample::FileCreate()
     // upload to OSS
     std::shared_ptr<std::iostream> content = std::make_shared<std::stringstream>();
     *content << "123";
-    PutObjectByUrlRequest uploadObjectRequest(uploadURl, content);
-    auto uploadObjectOutcome = client->PutObjectByUrl(uploadObjectRequest);
-    if (!uploadObjectOutcome.isSuccess()) {
-        PrintError(__FUNCTION__, uploadObjectOutcome.error());
+    DataPutByUrlRequest uploadDataRequest(uploadURl, content);
+    auto uploadDataOutcome = client->DataPutByUrl(uploadDataRequest);
+    if (!uploadDataOutcome.isSuccess()) {
+        PrintError(__FUNCTION__, uploadDataOutcome.error());
         return fileID;
     }
-    std::cout << __FUNCTION__ << "upload object success" << std::endl;
+    std::cout << __FUNCTION__ << "upload data success" << std::endl;
 
     // PDS complete
     FileCompleteRequest completeRequest(Config::DriveID, fileID, uploadID);
@@ -102,22 +102,37 @@ void FileSample::FileDownload(const std::string& fileID)
     std::cout << __FUNCTION__ << " download url:" << downloadURl << ", size:" << size << std::endl;
 
     // download from OSS
-    GetObjectByUrlRequest downloadObjectRequest(downloadURl);
-    auto downloadObjectOutcome = client->GetObjectByUrl(downloadObjectRequest);
-    if (!downloadObjectOutcome.isSuccess()) {
-        PrintError(__FUNCTION__, downloadObjectOutcome.error());
+    DataGetByUrlRequest downloadDataRequest(downloadURl);
+    auto downloadDataOutcome = client->DataGetByUrl(downloadDataRequest);
+    if (!downloadDataOutcome.isSuccess()) {
+        PrintError(__FUNCTION__, downloadDataOutcome.error());
     }
 
-    auto content = downloadObjectOutcome.result().Content()->rdbuf();
-    std::cout << __FUNCTION__ << " download object success" << std::endl;
+    auto content = downloadDataOutcome.result().Content()->rdbuf();
+    std::cout << __FUNCTION__ << " download data success" << std::endl;
     std::cout << __FUNCTION__ << " " << content << std::endl;
 }
+
+void FileSample::FileGet(const std::string& fileID)
+{
+    FileGetRequest request(Config::DriveID, fileID);
+    auto outcome = client->FileGet(request);
+    if (outcome.isSuccess()) {
+        std::cout << __FUNCTION__ << " FileGet success" << std::endl;
+        outcome.result().PrintString();
+    }
+    else {
+        PrintError(__FUNCTION__, outcome.error());
+    }
+}
+
 
 void FileSample::FileRename(const std::string& fileID)
 {
     FileRenameRequest request(Config::DriveID, fileID, "test_file", "auto_rename");
     auto outcome = client->FileRename(request);
     if (outcome.isSuccess()) {
+        std::cout << __FUNCTION__ << " FileRename success" << std::endl;
         outcome.result().PrintString();
     }
     else {
@@ -131,6 +146,7 @@ void FileSample::FileTrash(const std::string& fileID)
     auto outcome = client->FileTrash(request);
     outcome.result().PrintString();
     if (outcome.isSuccess()) {
+        std::cout << __FUNCTION__ << " FileTrash success" << std::endl;
         outcome.result().PrintString();
     }
     else {
@@ -144,6 +160,7 @@ void FileSample::FileDelete(const std::string& fileID)
     auto outcome = client->FileDelete(request);
     outcome.result().PrintString();
     if (outcome.isSuccess()) {
+        std::cout << __FUNCTION__ << " FileDelete success" << std::endl;
         outcome.result().PrintString();
     }
     else {
@@ -151,3 +168,34 @@ void FileSample::FileDelete(const std::string& fileID)
     }
 }
 
+void FileSample::UserTagsPut(const std::string& fileID)
+{
+
+    UserTagList tags;
+    tags.push_back(UserTag("key1", "value1"));
+    tags.push_back(UserTag("key2", "value2"));
+    MetaUserTagsPutRequest request(Config::DriveID, fileID, tags);
+    auto outcome = client->MetaUserTagsPut(request);
+    if (outcome.isSuccess()) {
+        std::cout << __FUNCTION__ << " UserTagsPut success, fileID:" << outcome.result().FileID() << std::endl;
+    }
+    else {
+        PrintError(__FUNCTION__, outcome.error());
+    }
+}
+
+void FileSample::UserTagsDelete(const std::string& fileID)
+{
+
+    std::vector<std::string> keys;
+    keys.push_back("key1");
+    keys.push_back("key2");
+    MetaUserTagsDeleteRequest request(Config::DriveID, fileID, keys);
+    auto outcome = client->MetaUserTagsDelete(request);
+    if (outcome.isSuccess()) {
+        std::cout << __FUNCTION__ << " UserTagsDelete success" << std::endl;
+    }
+    else {
+        PrintError(__FUNCTION__, outcome.error());
+    }
+}
