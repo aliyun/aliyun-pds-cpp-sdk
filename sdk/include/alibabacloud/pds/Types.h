@@ -77,6 +77,13 @@ namespace PDS
         void *UserData;
     };
 
+    using ProgressControlHandler = std::function<int32_t(void *userData)>;
+    struct  ALIBABACLOUD_PDS_EXPORT ProgressControl
+    {
+        ProgressControlHandler Handler;
+        void *UserData;
+    };
+
     using MetaData = std::map<std::string, std::string, caseInsensitiveLess>;
     using HeaderCollection = std::map<std::string, std::string, caseInsensitiveLess>;
     using ParameterCollection = std::map<std::string, std::string, caseSensitiveLess>;

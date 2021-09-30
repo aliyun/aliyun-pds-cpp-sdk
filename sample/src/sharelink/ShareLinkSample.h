@@ -1,15 +1,12 @@
 #include <alibabacloud/pds/PdsClient.h>
 
-class ResumableSample
+class ShareLinkSample
 {
 public:
-    ResumableSample();
-    ~ResumableSample();
+    ShareLinkSample();
+    ~ShareLinkSample();
 
-    std::string ResumableFileUpload();
-    std::string ResumableFileUploadStopOnce();
-    std::string ResumableFileUploadCancel();
-
+    void FileDownload(const std::string& fileID);
     void ResumableFileDownload(const std::string& fileID);
     void ResumableFileDownloadStopOnce(const std::string& fileID);
     void ResumableFileDownloadCancel(const std::string& fileID);

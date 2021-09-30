@@ -22,6 +22,14 @@ namespace AlibabaCloud
 {
 namespace PDS
 {
+
+    struct UploadPartRecord {
+        int64_t partNumber;
+        int64_t offset;
+        int64_t size;
+        uint64_t crc64;
+    };
+    typedef std::vector<UploadPartRecord> UploadPartRecordList;
     struct UploadRecord{
         std::string opType;
         std::string driveID;
@@ -32,8 +40,8 @@ namespace PDS
         std::string mtime;
         uint64_t size;
         uint64_t partSize;
+        UploadPartRecordList parts;
         std::string md5Sum;
-        std::string sha1Sum;
     };
 
     class ResumableUploader : public ResumableBaseWorker
@@ -51,23 +59,19 @@ namespace PDS
         virtual FileCompleteOutcome FileCompleteWrap(const FileCompleteRequest &request) const;
 
         virtual void initRecordInfo();
-        virtual void buildRecordInfo(const AlibabaCloud::PDS::Json::Value& value);
-        virtual void dumpRecordInfo(AlibabaCloud::PDS::Json::Value& value);
         virtual int validateRecord();
 
     private:
-        int getPartsToUpload(PdsError &err, PartList &partsUploaded, PartList &partsToUpload);
+        int getPartsToUpload(PdsError &err, UploadPartRecordList &partsUploaded, UploadPartRecordList &partsToUpload);
         virtual void genRecordPath();
         virtual int loadRecord();
         virtual int prepare(PdsError& err);
+        static void UploadPartProcessCallback(size_t increment, int64_t transfered, int64_t total, void *userData);
+        static int32_t UploadPartProcessControlCallback(void *userData);
 
         const FileUploadRequest& request_;
         UploadRecord record_;
         const PdsClientImpl *client_;
-        std::string driveID_;
-        std::string fileID_;
-        std::string uploadID_;
-        static void UploadPartProcessCallback(size_t increment, int64_t transfered, int64_t total, void *userData);
     };
 }
 }

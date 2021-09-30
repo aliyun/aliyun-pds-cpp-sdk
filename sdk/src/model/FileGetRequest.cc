@@ -23,8 +23,10 @@
 #include <sstream>
 using namespace AlibabaCloud::PDS;
 
-FileGetRequest::FileGetRequest(const std::string& driveID, const std::string& fileID):
+FileGetRequest::FileGetRequest(const std::string& driveID, const std::string& shareID,
+    const std::string& fileID):
         driveID_(driveID),
+        shareID_(shareID),
         fileID_(fileID),
         urlExpireSec_(0)
 {
@@ -39,7 +41,12 @@ std::string FileGetRequest::Path() const
 std::shared_ptr<std::iostream> FileGetRequest::Body() const
 {
     Json::Value root;
-    root["drive_id"] = driveID_;
+    if (!driveID_.empty()) {
+        root["drive_id"] = driveID_;
+    }
+    if (!shareID_.empty()) {
+        root["share_id"] = shareID_;
+    }
     root["file_id"] = fileID_;
 
     if (0 != urlExpireSec_) {
@@ -62,4 +69,18 @@ int FileGetRequest::validate() const
 void FileGetRequest::setUrlExpireSec(int64_t urlExpireSec)
 {
     urlExpireSec_ = urlExpireSec;
+}
+
+void FileGetRequest::setShareToken(const std::string& shareToken)
+{
+    shareToken_ = shareToken;
+}
+
+HeaderCollection FileGetRequest::specialHeaders() const
+{
+    auto headers = PdsRequest::specialHeaders();
+    if (!shareToken_.empty()) {
+        headers["x-share-token"] = shareToken_;
+    }
+    return headers;
 }

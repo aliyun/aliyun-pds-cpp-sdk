@@ -1,5 +1,7 @@
 #include <iostream>
 #include "../Config.h"
+#include "../utils/MyCredentialsProvider.h"
+#include "../utils/ResumableCallBack.h"
 #include "ResumableSample.h"
 #include <alibabacloud/pds/Const.h>
 #include <memory>
@@ -13,7 +15,8 @@ using namespace AlibabaCloud::PDS;
 ResumableSample::ResumableSample()
 {
     ClientConfiguration conf;
-    client = new PdsClient(Config::Endpoint, Config::AccessToken, conf);
+    std::shared_ptr<MyCredentialsProvider> cProvider = std::make_shared<MyCredentialsProvider>(Config::AccessToken);
+    client = new PdsClient(Config::Endpoint, cProvider, conf);
 }
 
 ResumableSample::~ResumableSample() {
@@ -26,12 +29,6 @@ void ResumableSample::PrintError(const std::string &funcName, const PdsError &er
         ",code:" << error.Code() <<
         ",message:" << error.Message() <<
         ",request_id:" << error.RequestId() << std::endl;
-}
-
-static void ProgressCallback(size_t increment, int64_t transfered, int64_t total, void* userData)
-{
-    std::cout << "ProgressCallback[" << userData << "] => " <<
-                 increment <<" ," << transfered << "," << total << std::endl;
 }
 
 std::string ResumableSample::ResumableFileUpload()
@@ -51,11 +48,118 @@ std::string ResumableSample::ResumableFileUpload()
     return fileID;
 }
 
+std::string ResumableSample::ResumableFileUploadStopOnce()
+{
+    ResetProgressControlCallTimes();
+
+    std::string fileID;
+    FileUploadRequest uploadRequest(Config::DriveID, Config::RootParentID, "test_resumable_file_stop_once", "", "refuse", Config::FileToUpload, "checkpoint_dir");
+    TransferProgress progressCallback = { ProgressCallback , this };
+    uploadRequest.setTransferProgress(progressCallback);
+
+    ProgressControl progressControlStopCallback = { ProgressControlStopCallback , this };
+    uploadRequest.setProgressControl(progressControlStopCallback);
+    auto uploadOutcome = client->ResumableFileUpload(uploadRequest);
+    if (!uploadOutcome.isSuccess()) {
+        PrintError(__FUNCTION__, uploadOutcome.error());
+    } else {
+        std::cout << __FUNCTION__ << " upload file success" << std::endl;
+        uploadOutcome.result().PrintString();
+        fileID = uploadOutcome.result().FileID();
+        return fileID;
+    }
+
+    ProgressControl progressControlCallback = { ProgressControlCallback , this };
+    uploadRequest.setProgressControl(progressControlCallback);
+    uploadOutcome = client->ResumableFileUpload(uploadRequest);
+    if (!uploadOutcome.isSuccess()) {
+        PrintError(__FUNCTION__, uploadOutcome.error());
+        return fileID;
+    } else {
+        std::cout << __FUNCTION__ << " upload file success" << std::endl;
+        uploadOutcome.result().PrintString();
+        fileID = uploadOutcome.result().FileID();
+    }
+
+    return fileID;
+}
+
+std::string ResumableSample::ResumableFileUploadCancel()
+{
+    ResetProgressControlCallTimes();
+
+    std::string fileID;
+    FileUploadRequest uploadRequest(Config::DriveID, Config::RootParentID, "test_resumable_file_cancel", "", "refuse", Config::FileToUpload, "checkpoint_dir");
+    TransferProgress progressCallback = { ProgressCallback , this };
+    uploadRequest.setTransferProgress(progressCallback);
+
+    ProgressControl progressControlCancelCallback = { ProgressControlCancelCallback , this };
+    uploadRequest.setProgressControl(progressControlCancelCallback);
+    auto uploadOutcome = client->ResumableFileUpload(uploadRequest);
+    if (!uploadOutcome.isSuccess()) {
+        PrintError(__FUNCTION__, uploadOutcome.error());
+        return fileID;
+    } else {
+        std::cout << __FUNCTION__ << " upload file success" << std::endl;
+        uploadOutcome.result().PrintString();
+        fileID = uploadOutcome.result().FileID();
+    }
+    return fileID;
+}
+
 void ResumableSample::ResumableFileDownload(const std::string& fileID)
 {
-    FileDownloadRequest downloadRequest(Config::DriveID, fileID, Config::FileDownloadTo, "checkpoint_dir");
+    FileDownloadRequest downloadRequest(Config::DriveID, "", fileID, Config::FileDownloadTo, "checkpoint_dir");
     TransferProgress progressCallback = { ProgressCallback , this };
     downloadRequest.setTransferProgress(progressCallback);
+    auto getOutcome = client->ResumableFileDownload(downloadRequest);
+    if (!getOutcome.isSuccess()) {
+        PrintError(__FUNCTION__, getOutcome.error());
+    }
+    else {
+        std::cout << __FUNCTION__ << " download file success" << std::endl;
+    }
+}
+
+void ResumableSample::ResumableFileDownloadStopOnce(const std::string& fileID)
+{
+    ResetProgressControlCallTimes();
+
+    FileDownloadRequest downloadRequest(Config::DriveID, "", fileID, Config::FileDownloadTo, "checkpoint_dir");
+    TransferProgress progressCallback = { ProgressCallback , this };
+    downloadRequest.setTransferProgress(progressCallback);
+
+    ProgressControl progressControlStopCallback = { ProgressControlStopCallback , this };
+    downloadRequest.setProgressControl(progressControlStopCallback);
+    auto getOutcome = client->ResumableFileDownload(downloadRequest);
+    if (!getOutcome.isSuccess()) {
+        PrintError(__FUNCTION__, getOutcome.error());
+    }
+    else {
+        std::cout << __FUNCTION__ << " download file success" << std::endl;
+    }
+
+    ProgressControl progressControlCallback = { ProgressControlCallback , this };
+    downloadRequest.setProgressControl(progressControlCallback);
+    getOutcome = client->ResumableFileDownload(downloadRequest);
+    if (!getOutcome.isSuccess()) {
+        PrintError(__FUNCTION__, getOutcome.error());
+    }
+    else {
+        std::cout << __FUNCTION__ << " download file success" << std::endl;
+    }
+}
+
+void ResumableSample::ResumableFileDownloadCancel(const std::string& fileID)
+{
+    ResetProgressControlCallTimes();
+
+    FileDownloadRequest downloadRequest(Config::DriveID, "", fileID, Config::FileDownloadTo, "checkpoint_dir");
+    TransferProgress progressCallback = { ProgressCallback , this };
+    downloadRequest.setTransferProgress(progressCallback);
+
+    ProgressControl progressControlCancelCallback = { ProgressControlCancelCallback , this };
+    downloadRequest.setProgressControl(progressControlCancelCallback);
     auto getOutcome = client->ResumableFileDownload(downloadRequest);
     if (!getOutcome.isSuccess()) {
         PrintError(__FUNCTION__, getOutcome.error());

@@ -49,6 +49,10 @@ namespace PDS
 
         const AlibabaCloud::PDS::TransferProgress& TransferProgress() const;
         void setTransferProgress(const AlibabaCloud::PDS::TransferProgress& arg);
+
+        const AlibabaCloud::PDS::ProgressControl& ProgressControl() const;
+        void setProgressControl(const AlibabaCloud::PDS::ProgressControl& arg);
+
     protected:
         ServiceRequest();
         void setPath(const std::string &path);
@@ -57,6 +61,7 @@ namespace PDS
         std::string path_;
         IOStreamFactory responseStreamFactory_;
         AlibabaCloud::PDS::TransferProgress transferProgress_;
+        AlibabaCloud::PDS::ProgressControl progressControl_;
     };
 }
 }

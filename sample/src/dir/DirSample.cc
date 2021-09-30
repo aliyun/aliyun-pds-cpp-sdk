@@ -1,5 +1,6 @@
 #include <iostream>
 #include "../Config.h"
+#include "../utils/MyCredentialsProvider.h"
 #include "DirSample.h"
 #include <alibabacloud/pds/Const.h>
 #include <memory>
@@ -12,7 +13,10 @@ using namespace AlibabaCloud::PDS;
 DirSample::DirSample()
 {
     ClientConfiguration conf;
-    client = new PdsClient(Config::Endpoint, Config::AccessToken, conf);
+    std::shared_ptr<MyCredentialsProvider> cProvider = std::make_shared<MyCredentialsProvider>("");
+    client = new PdsClient(Config::Endpoint, cProvider, conf);
+    // update access token
+    cProvider->setAccessToken(Config::AccessToken);
 }
 
 DirSample::~DirSample() {

@@ -1,5 +1,6 @@
 #include <iostream>
 #include "../Config.h"
+#include "../utils/MyCredentialsProvider.h"
 #include "FileSample.h"
 #include <alibabacloud/pds/Const.h>
 #include <memory>
@@ -12,7 +13,8 @@ using namespace AlibabaCloud::PDS;
 FileSample::FileSample()
 {
     ClientConfiguration conf;
-    client = new PdsClient(Config::Endpoint, Config::AccessToken, conf);
+    std::shared_ptr<MyCredentialsProvider> cProvider = std::make_shared<MyCredentialsProvider>(Config::AccessToken);
+    client = new PdsClient(Config::Endpoint, cProvider, conf);
 }
 
 FileSample::~FileSample() {
@@ -54,7 +56,6 @@ std::string FileSample::FileCreate()
     }
     getUploadUrlOutcome.result().PrintString();
 
-
     PartInfoRespList partInfoRespList = getUploadUrlOutcome.result().PartInfoRespList();
     if (partInfoRespList.size() == 0) {
         std::cout << __FUNCTION__ << " partInfoRespList empty" << std::endl;
@@ -64,8 +65,7 @@ std::string FileSample::FileCreate()
     std::cout << __FUNCTION__ << " upload url" << uploadURl << std::endl;
 
     // upload to OSS
-    std::shared_ptr<std::iostream> content = std::make_shared<std::stringstream>();
-    *content << "123";
+    std::shared_ptr<std::iostream> content = std::make_shared<std::fstream>(Config::FileToUpload, std::ios::in | std::ios::binary);
     DataPutByUrlRequest uploadDataRequest(uploadURl, content);
     auto uploadDataOutcome = client->DataPutByUrl(uploadDataRequest);
     if (!uploadDataOutcome.isSuccess()) {
@@ -87,13 +87,14 @@ std::string FileSample::FileCreate()
 
 void FileSample::FileDownload(const std::string& fileID)
 {
-    FileGetRequest request(Config::DriveID, fileID);
+    FileGetRequest request(Config::DriveID, "", fileID);
     auto getOutcome = client->FileGet(request);
     if (getOutcome.isSuccess()) {
         getOutcome.result().PrintString();
     }
     else {
         PrintError(__FUNCTION__, getOutcome.error());
+        return;
     }
     getOutcome.result().PrintString();
 
@@ -103,9 +104,12 @@ void FileSample::FileDownload(const std::string& fileID)
 
     // download from OSS
     DataGetByUrlRequest downloadDataRequest(downloadURl);
+    downloadDataRequest.setResponseStreamFactory([=]() {return std::make_shared<std::fstream>(Config::FileDownloadTo,
+        std::ios_base::out | std::ios_base::in | std::ios_base::trunc| std::ios_base::binary); });
     auto downloadDataOutcome = client->DataGetByUrl(downloadDataRequest);
     if (!downloadDataOutcome.isSuccess()) {
         PrintError(__FUNCTION__, downloadDataOutcome.error());
+        return;
     }
 
     auto content = downloadDataOutcome.result().Content()->rdbuf();
@@ -115,7 +119,7 @@ void FileSample::FileDownload(const std::string& fileID)
 
 void FileSample::FileGet(const std::string& fileID)
 {
-    FileGetRequest request(Config::DriveID, fileID);
+    FileGetRequest request(Config::DriveID, "", fileID);
     auto outcome = client->FileGet(request);
     if (outcome.isSuccess()) {
         std::cout << __FUNCTION__ << " FileGet success" << std::endl;
@@ -125,7 +129,6 @@ void FileSample::FileGet(const std::string& fileID)
         PrintError(__FUNCTION__, outcome.error());
     }
 }
-
 
 void FileSample::FileRename(const std::string& fileID)
 {

@@ -1,12 +1,12 @@
 /*
  * Copyright 2009-2017 Alibaba Cloud All rights reserved.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,12 +37,15 @@ namespace PDS
             Url url() const;
             void setMethod(Http::Method method);
             void setUrl(const Url &url);
-            
+
             const IOStreamFactory& ResponseStreamFactory() const { return responseStreamFactory_; }
             void setResponseStreamFactory(const IOStreamFactory& factory) { responseStreamFactory_ = factory; }
 
             const AlibabaCloud::PDS::TransferProgress & TransferProgress() const {  return transferProgress_; }
             void setTransferProgress(const AlibabaCloud::PDS::TransferProgress &arg) { transferProgress_ = arg;}
+
+            const AlibabaCloud::PDS::ProgressControl & ProgressControl() const {  return progressControl_; }
+            void setProgressControl(const AlibabaCloud::PDS::ProgressControl &arg) { progressControl_ = arg;}
 
             void setCheckCrc64(bool enable) { hasCheckCrc64_ = enable; }
             bool hasCheckCrc64() const { return hasCheckCrc64_; }
@@ -60,6 +63,7 @@ namespace PDS
             bool hasCheckCrc64_;
             uint64_t crc64Result_;
             int64_t transferedBytes_;
+            AlibabaCloud::PDS::ProgressControl progressControl_;
     };
 }
 }

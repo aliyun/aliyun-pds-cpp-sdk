@@ -26,18 +26,22 @@ namespace PDS
     class ALIBABACLOUD_PDS_EXPORT FileGetRequest: public PdsRequest
     {
     public:
-        FileGetRequest(const std::string& driveID, const std::string& fileID);
+        FileGetRequest(const std::string& driveID, const std::string& shareID, const std::string& fileID);
         std::string Path() const;
         virtual std::shared_ptr<std::iostream> Body() const;
 
         void setUrlExpireSec(int64_t urlExpireSec);
+        void setShareToken(const std::string& shareToken);
     protected:
+        virtual HeaderCollection specialHeaders() const;
         int validate() const;
     private:
         std::string driveID_;
+        std::string shareID_;
         std::string fileID_;
-        std::string path_;
         int64_t urlExpireSec_;
+        std::string shareToken_;
+        std::string path_;
     };
 }
 }

@@ -213,6 +213,7 @@ namespace PDS
         uint64_t recvCrc64Value;
         int sendSpeed;
         int recvSpeed;
+        ProgressControlHandler progressControl;
     };
 
     static size_t sendBody(char *ptr, size_t size, size_t nmemb, void *userdata)
@@ -366,6 +367,13 @@ namespace PDS
             return 1;
         }
 
+        //stop by upper progress controller
+        if (state->progressControl) {
+            if (state->progressControl(state->userData) != 0) {
+                return 1;
+            }
+        }
+
         //for speed update
         if (thiz->sendRateLimiter_ != nullptr) {
             auto rate = thiz->sendRateLimiter_->Rate();
@@ -471,7 +479,8 @@ std::shared_ptr<HttpResponse> CurlHttpClient::makeRequest(const std::shared_ptr<
         request->TransferProgress().Handler,
         request->TransferProgress().UserData,
         request->hasCheckCrc64(), initCRC64, initCRC64,
-        0, 0
+        0, 0,
+        request->ProgressControl().Handler,
     };
 
     if (request->hasHeader(Http::CONTENT_LENGTH)) {

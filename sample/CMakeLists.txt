@@ -25,12 +25,16 @@ file(GLOB sample_src "src/*")
 file(GLOB sample_dir_src "src/dir/*")
 file(GLOB sample_file_src "src/file/*")
 file(GLOB sample_resumable_src "src/resumable/*")
+file(GLOB sample_sharelink_src "src/sharelink/*")
+file(GLOB sample_utils_src "src/utils/*")
 
 add_executable(${PROJECT_NAME}
 	${sample_src}
 	${sample_dir_src}
 	${sample_file_src}
-	${sample_resumable_src})
+	${sample_resumable_src}
+	${sample_sharelink_src}
+	${sample_utils_src})
 
 target_include_directories(${PROJECT_NAME}
 	PRIVATE ${CMAKE_SOURCE_DIR}/sdk/include)

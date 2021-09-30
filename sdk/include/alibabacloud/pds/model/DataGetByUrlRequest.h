@@ -35,7 +35,7 @@ namespace PDS
         void setTrafficLimit(uint64_t value);
         void setUserAgent(const std::string& ua);
     protected:
-        virtual HeaderCollection specialHeaders() const ;
+        virtual HeaderCollection specialHeaders() const;
         virtual int validate() const;
     private:
         int64_t range_[2];

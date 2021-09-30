@@ -24,67 +24,54 @@
 
 using namespace AlibabaCloud::PDS;
 
-FileDownloadRequest::FileDownloadRequest(const std::string& driveID, const std::string& fileID,
+FileDownloadRequest::FileDownloadRequest(const std::string& driveID, const std::string& shareID, const std::string& fileID,
     const std::string &filePath, const std::string &checkpointDir,
     const uint64_t partSize, const uint32_t threadNum):
     PdsResumableBaseRequest(checkpointDir, partSize, threadNum),
     driveID_(driveID),
+    shareID_(shareID),
     fileID_(fileID),
     filePath_(filePath)
 {
     tempFilePath_ = filePath + ".temp";
 }
 
-FileDownloadRequest::FileDownloadRequest(const std::string& driveID, const std::string& fileID,
+FileDownloadRequest::FileDownloadRequest(const std::string& driveID, const std::string& shareID, const std::string& fileID,
     const std::string &filePath, const std::string &checkpointDir) :
-    FileDownloadRequest(driveID, fileID, filePath, checkpointDir, DefaultPartSize, DefaultResumableThreadNum)
+    FileDownloadRequest(driveID, shareID, fileID, filePath, checkpointDir, DefaultPartSize, DefaultResumableThreadNum)
 {}
 
-FileDownloadRequest::FileDownloadRequest(const std::string& driveID, const std::string& fileID,
+FileDownloadRequest::FileDownloadRequest(const std::string& driveID, const std::string& shareID, const std::string& fileID,
     const std::string &filePath) :
-    FileDownloadRequest(driveID, fileID, filePath, "", DefaultPartSize, DefaultResumableThreadNum)
+    FileDownloadRequest(driveID, shareID, fileID, filePath, "", DefaultPartSize, DefaultResumableThreadNum)
 {}
 
 //wstring
-FileDownloadRequest::FileDownloadRequest(const std::string& driveID, const std::string& fileID,
+FileDownloadRequest::FileDownloadRequest(const std::string& driveID, const std::string& shareID, const std::string& fileID,
     const std::wstring &filePath, const std::wstring &checkpointDir,
     const uint64_t partSize, const uint32_t threadNum) :
     PdsResumableBaseRequest(checkpointDir, partSize, threadNum),
     driveID_(driveID),
+    shareID_(shareID),
     fileID_(fileID),
     filePathW_(filePath)
 {
     tempFilePathW_ = filePath + L".temp";
 }
 
-FileDownloadRequest::FileDownloadRequest(const std::string &driveID, const std::string &fileID,
+FileDownloadRequest::FileDownloadRequest(const std::string &driveID, const std::string& shareID, const std::string &fileID,
     const std::wstring &filePath, const std::wstring &checkpointDir) :
-    FileDownloadRequest(driveID, fileID, filePath, checkpointDir, DefaultPartSize, DefaultResumableThreadNum)
+    FileDownloadRequest(driveID, shareID, fileID, filePath, checkpointDir, DefaultPartSize, DefaultResumableThreadNum)
 {}
 
-FileDownloadRequest::FileDownloadRequest(const std::string &driveID, const std::string &fileID,
+FileDownloadRequest::FileDownloadRequest(const std::string &driveID, const std::string& shareID, const std::string &fileID,
     const std::wstring &filePath) :
-    FileDownloadRequest(driveID, fileID, filePath, L"", DefaultPartSize, DefaultResumableThreadNum)
+    FileDownloadRequest(driveID, shareID, fileID, filePath, L"", DefaultPartSize, DefaultResumableThreadNum)
 {}
 
-void FileDownloadRequest::setModifiedSinceConstraint(const std::string &value)
+void FileDownloadRequest::setShareToken(const std::string& shareToken)
 {
-    modifiedSince_ = value;
-}
-
-void FileDownloadRequest::setUnmodifiedSinceConstraint(const std::string &value)
-{
-    unmodifiedSince_ = value;
-}
-
-void FileDownloadRequest::setMatchingETagConstraints(const std::vector<std::string> &values)
-{
-    matchingETags_ = values;
-}
-
-void FileDownloadRequest::setNonmatchingETagConstraints(const std::vector<std::string> &values)
-{
-    nonmatchingETags_ = values;
+    shareToken_ = shareToken;
 }
 
 int FileDownloadRequest::validate() const

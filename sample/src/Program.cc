@@ -5,6 +5,7 @@
 #include "dir/DirSample.h"
 #include "file/FileSample.h"
 #include "resumable/ResumableSample.h"
+#include "sharelink/ShareLinkSample.h"
 
 using namespace AlibabaCloud::PDS;
 
@@ -56,6 +57,13 @@ int main(void)
         resumableSample.ResumableFileDownload(rFileID);
         fileSample.FileTrash(rFileID);
         fileSample.FileDelete(rFileID);
+    }
+
+    ShareLinkSample shareLinkSample;
+    std::string shareFileID = Config::FileID;
+    if (!shareFileID.empty()) {
+        shareLinkSample.FileDownload(shareFileID);
+        shareLinkSample.ResumableFileDownload(shareFileID);
     }
 
     ShutdownSdk();

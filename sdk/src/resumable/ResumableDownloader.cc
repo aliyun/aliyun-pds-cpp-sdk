@@ -42,7 +42,9 @@ DataGetOutcome ResumableDownloader::Download()
     }
 
     if (url_.empty()) {
-        FileGetRequest getRequest(record_.driveID, record_.fileID);
+        FileGetRequest getRequest(record_.driveID, record_.shareID, record_.fileID);
+        getRequest.setShareToken(request_.ShareToken());
+
         auto fileGetOutcome = FileGetWrap(getRequest);
         if (!fileGetOutcome.isSuccess()) {
             return DataGetOutcome(fileGetOutcome.error());
@@ -73,6 +75,10 @@ DataGetOutcome ResumableDownloader::Download()
                 if (!client_->isEnableRequest())
                     break;
 
+                // check resumable progress control
+                if (DownloadPartProcessControlCallback((void *)this) != 0)
+                    break;
+
                 uint64_t pos = partSize_ * (part.partNumber - 1);
                 uint64_t start = part.offset;
                 uint64_t end = start + part.size - 1;
@@ -89,8 +95,13 @@ DataGetOutcome ResumableDownloader::Download()
 
                 auto process = request_.TransferProgress();
                 if (process.Handler) {
-                    TransferProgress uploadPartProcess = { DownloadPartProcessCallback, (void *)this };
-                    getDataReq.setTransferProgress(uploadPartProcess);
+                    TransferProgress downloadPartProcess = { DownloadPartProcessCallback, (void *)this };
+                    getDataReq.setTransferProgress(downloadPartProcess);
+                }
+                auto progressControl = request_.ProgressControl();
+                if (progressControl.Handler) {
+                    ProgressControl downloadPartProgressControl = { DownloadPartProcessControlCallback, (void *)this };
+                    getDataReq.setProgressControl(downloadPartProgressControl);
                 }
                 if (request_.TrafficLimit() != 0) {
                     getDataReq.setTrafficLimit(request_.TrafficLimit());
@@ -102,12 +113,20 @@ DataGetOutcome ResumableDownloader::Download()
                 {
                     std::lock_guard<std::mutex> lck(lock_);
                     if (!outcome.isSuccess() && outcome.error().Code() == "AccessDenied" && outcome.error().Message().find("expired")) {
-                        FileGetRequest getRequest(record_.driveID, record_.fileID);
+                        FileGetRequest getRequest(record_.driveID, record_.shareID ,record_.fileID);
+                        getRequest.setShareToken(request_.ShareToken());
+
                         auto fileGetOutcome = FileGetWrap(getRequest);
                         if (!fileGetOutcome.isSuccess()) {
                             outcomes.push_back(fileGetOutcome.error());
+                            break;
                         }
-                        // TODO: 文件content-hash
+                        // check file content-hash
+                        auto contentHash = fileGetOutcome.result().ContentHash();
+                        if (contentHash != contentHash_ ) {
+                            outcomes.push_back(PdsError("SourceFileModified","Source file has been modified since last download."));
+                            break;
+                        }
                         url_ = fileGetOutcome.result().Url();
                         needRetry = true;
                     }
@@ -147,6 +166,7 @@ DataGetOutcome ResumableDownloader::Download()
                         Json::Value root;
                         root["opType"] = record.opType;
                         root["driveID"] = record.driveID;
+                        root["shareID"] = record.shareID;
                         root["fileID"] = record.fileID;
                         root["contentHash"] = record.contentHash;
                         root["filePath"] = record.filePath;
@@ -184,16 +204,26 @@ DataGetOutcome ResumableDownloader::Download()
         }
     }
 
+    if (!client_->isEnableRequest()) {
+        return DataGetOutcome(PdsError("ClientError:100002", "Disable all requests by upper."));
+    }
+
+    int32_t controlFlag = DownloadPartProcessControlCallback((void *)this);
+    if (controlFlag == ProgressControlStop) {
+        return DataGetOutcome(PdsError("ClientError:100003", "Download stop by upper."));
+    }
+    if (controlFlag == ProgressControlCancel) {
+        removeRecordFile();
+        removeTempFile();
+        return DataGetOutcome(PdsError("ClientError:100004", "Download cancel by upper."));
+    }
+
     std::shared_ptr<std::iostream> content = nullptr;
     for (auto& outcome : outcomes) {
         if (!outcome.isSuccess()) {
             return DataGetOutcome(outcome.error());
         }
         outcome.result().setContent(content);
-    }
-
-    if (!client_->isEnableRequest()) {
-        return DataGetOutcome(PdsError("ClientError:100002", "Disable all requests by upper."));
     }
 
     if (downloadedParts.size() < outcomes.size()) {
@@ -205,15 +235,21 @@ DataGetOutcome ResumableDownloader::Download()
         return a.partNumber < b.partNumber;
     });
 
+    // check size
+    uint64_t localFileSize = GetFileSize(request_.TempFilePath(), request_.TempFilePathW());
+    if (fileSize_ != localFileSize) {
+        return DataGetOutcome(PdsError("FileSizeCheckError", "Resumable Download data check size fail."));
+    }
+
     //check crc64
-    if (client_->configuration().enableCrc64) {
+    if (client_->configuration().enableCrc64 && !crc64Hash_.empty()) {
         uint64_t localCRC64 = downloadedParts[0].crc64;
         for (size_t i = 1; i < downloadedParts.size(); i++) {
             localCRC64 = CRC64::CombineCRC(localCRC64, downloadedParts[i].crc64, downloadedParts[i].size);
         }
         uint64_t serverCRC64 = std::strtoull(crc64Hash_.c_str(), nullptr, 10);
         if (localCRC64 != serverCRC64) {
-            return DataGetOutcome(PdsError("CrcCheckError", "ResumableDownload data CRC checksum fail."));
+            return DataGetOutcome(PdsError("CrcCheckError", "Resumable Download data CRC checksum fail."));
         }
     }
 
@@ -240,6 +276,7 @@ int ResumableDownloader::prepare(PdsError& err)
         Json::Value root;
         root["opType"] = record_.opType;
         root["driveID"] = record_.driveID;
+        root["shareID"] = record_.shareID;
         root["fileID"] = record_.fileID;
         root["contentHash"] = record_.contentHash;
         root["filePath"] = record_.filePath;
@@ -274,6 +311,7 @@ int ResumableDownloader::validateRecord()
     Json::Value root;
     root["opType"] = record.opType;
     root["driveID"] = record.driveID;
+    root["shareID"] = record.shareID;
     root["fileID"] = record.fileID;
     root["contentHash"] = record.contentHash;
     root["filePath"] = record.filePath;
@@ -313,6 +351,7 @@ int ResumableDownloader::loadRecord()
 
         record_.opType = root["opType"].asString();
         record_.driveID = root["driveID"].asString();
+        record_.shareID = root["shareID"].asString();
         record_.fileID = root["fileID"].asString();
         record_.contentHash = root["contentHash"].asString();
         record_.filePath = root["filePath"].asString();
@@ -347,10 +386,11 @@ void ResumableDownloader::genRecordPath()
         return;
 
     std::stringstream ss;
-    ss << "pds://" << request_.DriveID() << "/" << request_.FileID() << "/" << contentHash_;
+    ss << "pds://" << request_.DriveID() << "/" << request_.ShareID() << "/" << request_.FileID() << "/" << contentHash_;
     if (!request_.VersionId().empty()) {
         ss << "?versionId=" << request_.VersionId();
     }
+
     auto srcPath = ss.str();
     auto destPath = !request_.FilePathW().empty() ? toString(request_.FilePathW()) : request_.FilePath();
     auto safeFileName = ComputeContentETag(srcPath) + "--" + ComputeContentETag(destPath);
@@ -407,6 +447,7 @@ void ResumableDownloader::initRecord()
 
     record_.opType = "ResumableDownload";
     record_.driveID = request_.DriveID();
+    record_.shareID = request_.ShareID();
     record_.fileID = request_.FileID();
     record_.contentHash = contentHash_;
     record_.filePath = filePath;
@@ -430,6 +471,18 @@ void ResumableDownloader::DownloadPartProcessCallback(size_t increment, int64_t 
     }
 }
 
+int32_t ResumableDownloader::DownloadPartProcessControlCallback(void *userData)
+{
+    auto downloader = (ResumableDownloader*)userData;
+    std::lock_guard<std::mutex> lck(downloader->lock_);
+
+    auto controller = downloader->request_.ProgressControl();
+    if (controller.Handler) {
+        return controller.Handler(controller.UserData);
+    }
+    return 0;
+}
+
 bool ResumableDownloader::renameTempFile()
 {
 #ifdef _WIN32
@@ -440,6 +493,19 @@ bool ResumableDownloader::renameTempFile()
 #endif
     {
         return RenameFile(request_.TempFilePath(), request_.FilePath());
+    }
+}
+
+void ResumableDownloader::removeTempFile()
+{
+#ifdef _WIN32
+    if (!request_.TempFilePathW().empty()) {
+        RemoveFile(request_.TempFilePathW());
+    }
+    else
+#endif
+    {
+        RemoveFile(request_.TempFilePath());
     }
 }
 

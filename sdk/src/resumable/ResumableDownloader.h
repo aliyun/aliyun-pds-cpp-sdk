@@ -32,6 +32,7 @@ namespace PDS
     struct DownloadRecord {
         std::string opType;
         std::string driveID;
+        std::string shareID;
         std::string fileID;
         std::string contentHash;
         std::string crc64Hash;
@@ -68,7 +69,9 @@ namespace PDS
         void initRecord();
         int getPartsToDownload(PdsError &err, PartRecordList &partsToDownload);
         bool renameTempFile();
+        void removeTempFile();
         static void DownloadPartProcessCallback(size_t increment, int64_t transfered, int64_t total, void *userData);
+        static int32_t DownloadPartProcessControlCallback(void *userData);
 
         virtual FileGetOutcome FileGetWrap(const FileGetRequest &request) const;
         virtual DataGetOutcome DataGetByUrlWrap(const DataGetByUrlRequest &request) const;

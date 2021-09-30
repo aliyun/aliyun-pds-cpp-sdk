@@ -1,12 +1,12 @@
 /*
  * Copyright 2009-2017 Alibaba Cloud All rights reserved.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -217,4 +217,28 @@ std::shared_ptr<std::fstream> AlibabaCloud::PDS::GetFstreamByPath(
     ((void)(pathw));
 #endif
     return std::make_shared<std::fstream>(path, mode);
+}
+
+uint64_t AlibabaCloud::PDS::GetFileSize(const std::string& path, const std::wstring& pathw)
+{
+    uint64_t retFileSize = 0;
+    if (!path.empty()) {
+        time_t lastMtime;
+        std::streamsize fileSize;
+        if (GetPathInfo(path, lastMtime, fileSize)) {
+            retFileSize = static_cast<uint64_t>(fileSize);
+        }
+    }
+#ifdef _WIN32
+    else if (!pathw.empty()) {
+        time_t lastMtime;
+        std::streamsize fileSize;
+        if (GetPathInfo(pathw, lastMtime, fileSize)) {
+            retFileSize = static_cast<uint64_t>(fileSize);
+        }
+    }
+#else
+    ((void)(pathw));
+#endif
+    return retFileSize;
 }

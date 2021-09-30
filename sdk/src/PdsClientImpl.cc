@@ -201,6 +201,9 @@ void PdsClientImpl::addOther(const std::shared_ptr<HttpRequest> &httpRequest, co
     //progress
     httpRequest->setTransferProgress(request.TransferProgress());
 
+    // progress control
+    httpRequest->setProgressControl(request.ProgressControl());
+
     //crc64 check
     auto checkCRC64 = !!(request.Flags()&REQUEST_FLAG_CHECK_CRC64);
     if (configuration().enableCrc64 && checkCRC64 ) {
@@ -572,11 +575,25 @@ FileCompleteOutcome PdsClientImpl::ResumableFileUpload(const FileUploadRequest &
         // upload data
         std::string uploadURl = partInfoRespList[0].UploadUrl();
         DataPutByUrlRequest putPartRequest(uploadURl, content);
-        // TODO: cancel
-        if (putPartRequest.TransferProgress().Handler) {
+        if (request.TransferProgress().Handler) {
             putPartRequest.setTransferProgress(request.TransferProgress());
         }
+        if (request.ProgressControl().Handler) {
+            putPartRequest.setProgressControl(request.ProgressControl());
+        }
         auto putOutCome = DataPutByUrl(putPartRequest);
+
+        auto controller = request.ProgressControl();
+        if (controller.Handler) {
+            int32_t controlFlag = controller.Handler(controller.UserData);
+            if (controlFlag == ProgressControlStop) {
+                return FileCompleteOutcome(PdsError("ClientError:100003", "Upload stop by upper."));
+            }
+            if (controlFlag == ProgressControlCancel) {
+                return FileCompleteOutcome(PdsError("ClientError:100004", "Upload cancel by upper."));
+            }
+        }
+
         if (!putOutCome.isSuccess()) {
            return FileCompleteOutcome(putOutCome.error());
         }
@@ -584,6 +601,16 @@ FileCompleteOutcome PdsClientImpl::ResumableFileUpload(const FileUploadRequest &
         // pds complete file
         FileCompleteRequest completeRequest(request.DriveID(), fileID, uploadID);
         auto completeOutcome = FileComplete(completeRequest);
+        if (!completeOutcome.isSuccess()) {
+            return FileCompleteOutcome(completeOutcome.error());
+        }
+
+        // check size
+        uint64_t uploadedfileSize = completeOutcome.result().Size();
+        if (request.FileSize() != uploadedfileSize) {
+            return FileCompleteOutcome(PdsError("FileSizeCheckError", "Upload data check size fail."));
+        }
+
         return completeOutcome;
     }
     else {
@@ -600,12 +627,14 @@ DataGetOutcome PdsClientImpl::ResumableFileDownload(const FileDownloadRequest &r
         return DataGetOutcome(PdsError("ValidateError", reqeustBase.validateMessage(code)));
     }
 
-    auto fileGetReq = FileGetRequest(request.DriveID(), request.FileID());
+    auto fileGetReq = FileGetRequest(request.DriveID(), request.ShareID(), request.FileID());
+    fileGetReq.setShareToken(request.ShareToken());
+
     auto fileGetOutcome = FileGet(fileGetReq);
     if (!fileGetOutcome.isSuccess()) {
         return DataGetOutcome(fileGetOutcome.error());
     }
-
+    fileGetOutcome.result().PrintString();
     auto fileSize = fileGetOutcome.result().Size();
     auto contentHash = fileGetOutcome.result().ContentHash();
     auto crc64Hash = fileGetOutcome.result().Crc64Hash();
@@ -613,19 +642,59 @@ DataGetOutcome PdsClientImpl::ResumableFileDownload(const FileDownloadRequest &r
 
     if (fileSize < (int64_t)request.PartSize()) {
         auto getDataReq = DataGetByUrlRequest(url);
-        getDataReq.setResponseStreamFactory([=]() {
-            return GetFstreamByPath(request.FilePath(), request.FilePathW(),
-                std::ios_base::out | std::ios_base::in | std::ios_base::trunc | std::ios_base::binary);
-        });
         if (request.TransferProgress().Handler) {
             getDataReq.setTransferProgress(request.TransferProgress());
+        }
+        if (request.ProgressControl().Handler) {
+            getDataReq.setProgressControl(request.ProgressControl());
         }
         if (request.TrafficLimit() != 0) {
             getDataReq.setTrafficLimit(request.TrafficLimit());
         }
+        getDataReq.setResponseStreamFactory([=]() {
+            return GetFstreamByPath(request.TempFilePath(), request.TempFilePathW(),
+                std::ios_base::out | std::ios_base::in | std::ios_base::trunc | std::ios_base::binary);
+        });
         auto outcome = DataGetByUrl(getDataReq);
+
+        auto controller = request.ProgressControl();
+        if (controller.Handler) {
+            int32_t controlFlag = controller.Handler(controller.UserData);
+            if (controlFlag == ProgressControlStop || controlFlag == ProgressControlCancel) {
+                if (IsFileExist(request.TempFilePath())) {
+                    RemoveFile(request.TempFilePath());
+                }
+#ifdef _WIN32
+                else if (IsFileExist(request.TempFilePathW())) {
+                    RemoveFile(request.TempFilePathW());
+                }
+#endif
+            }
+            if (controlFlag == ProgressControlStop) {
+                return DataGetOutcome(PdsError("ClientError:100003", "Download stop by upper."));
+            }
+            if (controlFlag == ProgressControlCancel) {
+                return DataGetOutcome(PdsError("ClientError:100004", "Download cancel by upper."));
+            }
+        }
         std::shared_ptr<std::iostream> content = nullptr;
         outcome.result().setContent(content);
+
+        // check size
+        uint64_t localFileSize = GetFileSize(request.TempFilePath(), request.TempFilePathW());
+        if (uint64_t(fileSize) != localFileSize) {
+            return DataGetOutcome(PdsError("FileSizeCheckError", "Download data check size fail."));
+        }
+
+        if (!request.TempFilePath().empty()) {
+            RenameFile(request.TempFilePath(), request.FilePath());
+        }
+#ifdef _WIN32
+        else if (!request.TempFilePathW().empty()) {
+            RenameFile(request.TempFilePathW(), request.FilePathW());
+        }
+#endif
+
         if (IsFileExist(request.TempFilePath())) {
             RemoveFile(request.TempFilePath());
         }
@@ -634,6 +703,7 @@ DataGetOutcome PdsClientImpl::ResumableFileDownload(const FileDownloadRequest &r
             RemoveFile(request.TempFilePathW());
         }
 #endif
+
         return outcome;
     }
 

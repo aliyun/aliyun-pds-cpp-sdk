@@ -67,7 +67,7 @@ PdsClient::PdsClient(const std::string &endpoint, const ClientConfiguration & co
 {
 }
 
-PdsClient::PdsClient(const std::string &endpoint, const std::string & accessToken,const ClientConfiguration & configuration) :
+PdsClient::PdsClient(const std::string &endpoint, const std::string & accessToken, const ClientConfiguration & configuration) :
     PdsClient(endpoint, std::make_shared<SimpleCredentialsProvider>(accessToken), configuration)
 {
 }

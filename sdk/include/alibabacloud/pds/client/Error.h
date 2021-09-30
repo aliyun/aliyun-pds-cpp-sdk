@@ -1,12 +1,12 @@
 /*
  * Copyright 2009-2017 Alibaba Cloud All rights reserved.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,7 +25,7 @@ namespace PDS
 {
     /*
     The status comes from the following modules: client, server, httpclient(ex. curl).
-    server: [100-600)  
+    server: [100-600)
     client: [100000-199999]
     curl  : [200000-299999], 200000 + CURLcode
 
@@ -34,6 +34,8 @@ namespace PDS
     const int ERROR_CLIENT_BASE      = 100000;
     const int ERROR_CRC_INCONSISTENT = ERROR_CLIENT_BASE + 1;
     const int ERROR_REQUEST_DISABLE  = ERROR_CLIENT_BASE + 2;
+    const int ERROR_REQUEST_PROGRESS_STOP   = ERROR_CLIENT_BASE + 3;
+    const int ERROR_REQUEST_PROGRESS_CANCEL = ERROR_CLIENT_BASE + 4;
 
     const int ERROR_CURL_BASE = 200000;
 

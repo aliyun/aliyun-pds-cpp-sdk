@@ -1,12 +1,12 @@
 /*
  * Copyright 2009-2017 Alibaba Cloud All rights reserved.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,19 +25,19 @@ namespace PDS
     class Outcome
     {
     public:
-        Outcome():success_(false), e_(), r_() 
+        Outcome():success_(false), e_(), r_()
         {
         }
-        Outcome(const E& e) :success_(false), e_(e) 
+        Outcome(const E& e) :success_(false), e_(e)
         {
         }
-        Outcome(const R& r): success_(true), r_(r)  
+        Outcome(const R& r): success_(true), r_(r)
         {
         }
         Outcome(E&& e) : success_(false), e_(std::forward<E>(e))
         {
         } // Error move constructor
-        Outcome(R&& r) : success_(true), r_(std::forward<R>(r)) 
+        Outcome(R&& r) : success_(true), r_(std::forward<R>(r))
         {
         } // Result move constructor
         Outcome(const Outcome& other) :

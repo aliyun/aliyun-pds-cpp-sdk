@@ -26,6 +26,7 @@ ServiceRequest::ServiceRequest() :
 {
     transferProgress_.Handler = nullptr;
     transferProgress_.UserData = nullptr;
+    progressControl_.Handler = nullptr;
 }
 
 std::string ServiceRequest::Path() const
@@ -56,6 +57,16 @@ const AlibabaCloud::PDS::TransferProgress & ServiceRequest::TransferProgress() c
 void ServiceRequest::setTransferProgress(const AlibabaCloud::PDS::TransferProgress &arg)
 {
     transferProgress_ = arg;
+}
+
+const AlibabaCloud::PDS::ProgressControl & ServiceRequest::ProgressControl() const
+{
+    return progressControl_;
+}
+
+void ServiceRequest::setProgressControl(const AlibabaCloud::PDS::ProgressControl &arg)
+{
+    progressControl_ = arg;
 }
 
 void ServiceRequest::setPath(const std::string & path)

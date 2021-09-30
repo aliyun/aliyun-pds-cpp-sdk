@@ -26,6 +26,9 @@ namespace PDS
     const int32_t DefaultPartSize = 8 * 1024 * 1024;
     const int32_t PartSizeLowerLimit = 100 * 1024;
     const int32_t DefaultResumableThreadNum = 3;
+    const int32_t ProgressControlContinue = 0;
+    const int32_t ProgressControlStop = 1;
+    const int32_t ProgressControlCancel = 2;
 
     const std::string DefaultImageThumbnailProcess = "image/resize,w_160/format,jpeg";
     const std::string DefaultImageUrlProcess = "image/resize,w_1920/format,jpeg";

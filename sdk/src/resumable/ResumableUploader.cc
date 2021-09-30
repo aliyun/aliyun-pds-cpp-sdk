@@ -70,8 +70,8 @@ FileCompleteOutcome ResumableUploader::Upload()
         return FileCompleteOutcome(err);
     }
 
-    PartList partsToUpload;
-    PartList uploadedParts;
+    UploadPartRecordList partsToUpload;
+    UploadPartRecordList uploadedParts;
     if (getPartsToUpload(err, uploadedParts, partsToUpload) != 0){
         return FileCompleteOutcome(err);
     }
@@ -79,7 +79,7 @@ FileCompleteOutcome ResumableUploader::Upload()
     std::vector<DataPutOutcome> outcomes;
 
     // 顺序上传分片
-    Part part;
+    UploadPartRecord part;
     while (true) {
         // need lock when parallel upload
         {
@@ -93,17 +93,21 @@ FileCompleteOutcome ResumableUploader::Upload()
         if (!client_->isEnableRequest())
             break;
 
-        uint64_t offset = partSize_ * (part.PartNumber() - 1);
-        uint64_t length = part.PartSize();
+        // check resumable progress control
+        if (UploadPartProcessControlCallback((void *)this) != 0)
+            break;
+
+        uint64_t offset = partSize_ * (part.partNumber - 1);
+        uint64_t length = part.size;
 
         auto content = GetFstreamByPath(request_.FilePath(), request_.FilePathW(),
             std::ios::in | std::ios::binary);
         content->seekg(offset, content->beg);
 
         PartInfoReqList partInfoReqList;
-        PartInfoReq info(part.PartNumber(), part.PartSize(), offset, offset+length);
+        PartInfoReq info(part.partNumber, part.size, offset, offset+length);
         partInfoReqList.push_back(info);
-        FileGetUploadUrlRequest getUploadPartUrlRequest(driveID_, fileID_, uploadID_, partInfoReqList);
+        FileGetUploadUrlRequest getUploadPartUrlRequest(record_.driveID, record_.fileID, record_.uploadID, partInfoReqList);
         auto getUploadPartUrlOutcome = FileGetUploadUrlWrap(getUploadPartUrlRequest);
         if (!getUploadPartUrlOutcome.isSuccess()) {
             return FileCompleteOutcome(getUploadPartUrlOutcome.error());
@@ -116,10 +120,16 @@ FileCompleteOutcome ResumableUploader::Upload()
 
         DataPutByUrlRequest putPartRequest(partInfoResp[0].UploadUrl(), content);
         putPartRequest.setContentLength(length);
+        putPartRequest.setFlags(putPartRequest.Flags() | REQUEST_FLAG_CHECK_CRC64 | REQUEST_FLAG_SAVE_CLIENT_CRC64);
         auto process = request_.TransferProgress();
         if (process.Handler) {
             TransferProgress uploadPartProcess = { UploadPartProcessCallback, (void *)this };
             putPartRequest.setTransferProgress(uploadPartProcess);
+        }
+        auto progressControl = request_.ProgressControl();
+        if (progressControl.Handler) {
+            ProgressControl uploadPartProgressControl = { UploadPartProcessControlCallback, (void *)this };
+            putPartRequest.setProgressControl(uploadPartProgressControl);
         }
         if (request_.TrafficLimit() != 0) {
             putPartRequest.setTrafficLimit(request_.TrafficLimit());
@@ -133,16 +143,58 @@ FileCompleteOutcome ResumableUploader::Upload()
         }
 #endif // ENABLE_PDS_TEST
 
-        if (putPartOutcome.isSuccess()) {
-            part.eTag_  = putPartOutcome.result().ETag();
-            part.cRC64_ = putPartOutcome.result().CRC64();
+        // local record lack of this uploaded part info, cause repeated upload
+        bool partAlreadyExist = false;
+        if (!putPartOutcome.isSuccess() && putPartOutcome.error().Code() == "PartAlreadyExist" &&
+            putPartOutcome.error().Message().find("sequential")) {
+                partAlreadyExist = true;
         }
 
         // need lock when parallel upload
         {
             // std::lock_guard<std::mutex> lck(lock_);
-            uploadedParts.push_back(part);
+            if (putPartOutcome.isSuccess() || partAlreadyExist) {
+                part.crc64 = putPartOutcome.result().CRC64();
+                uploadedParts.push_back(part);
+            }
+
             outcomes.push_back(putPartOutcome);
+
+            //update record
+            if (hasRecordPath() && (putPartOutcome.isSuccess() || partAlreadyExist)) {
+                auto &record = record_;
+                record.parts = uploadedParts;
+
+                Json::Value root;
+                root["opType"] = record_.opType;
+                root["driveID"] = record_.driveID;
+                root["fileID"] = record_.fileID;
+                root["uploadID"] = record_.uploadID;
+                root["name"] = record_.name;
+                root["filePath"] = record_.filePath;
+                root["mtime"] = record_.mtime;
+                root["size"] = record_.size;
+                root["partSize"] = record_.partSize;
+
+                int index = 0;
+                for (UploadPartRecord& partR : record.parts) {
+                    root["parts"][index]["partNumber"] = partR.partNumber;
+                    root["parts"][index]["size"] = partR.size;
+                    root["parts"][index]["crc64"] = partR.crc64;
+                    index++;
+                }
+
+                std::stringstream ss;
+                ss << root;
+                std::string md5Sum = ComputeContentETag(ss);
+                root["md5Sum"] = md5Sum;
+
+                auto recordStream = GetFstreamByPath(recordPath_, recordPathW_, std::ios::out);
+                if (recordStream->is_open()) {
+                    *recordStream << root;
+                    recordStream->close();
+                }
+            }
         }
     }
 
@@ -150,8 +202,21 @@ FileCompleteOutcome ResumableUploader::Upload()
         return FileCompleteOutcome(PdsError("ClientError:100002", "Disable all requests by upper."));
     }
 
+    int32_t controlFlag = UploadPartProcessControlCallback((void *)this);
+    if (controlFlag == ProgressControlStop) {
+        return FileCompleteOutcome(PdsError("ClientError:100003", "Upload stop by upper."));
+    }
+    if (controlFlag == ProgressControlCancel) {
+        removeRecordFile();
+        return FileCompleteOutcome(PdsError("ClientError:100004", "Upload cancel by upper."));
+    }
+
     for (const auto& outcome : outcomes) {
         if (!outcome.isSuccess()) {
+            // ignore PartAlreadyExist error
+            if (outcome.error().Code() == "PartAlreadyExist" && outcome.error().Message().find("sequential")) {
+                continue;
+            }
             return FileCompleteOutcome(outcome.error());
         }
     }
@@ -161,18 +226,35 @@ FileCompleteOutcome ResumableUploader::Upload()
     }
 
     // sort uploadedParts
-    std::sort(uploadedParts.begin(), uploadedParts.end(), [&](const Part& a, const Part& b)
+    std::sort(uploadedParts.begin(), uploadedParts.end(), [&](const UploadPartRecord& a, const UploadPartRecord& b)
     {
-        return a.PartNumber() < b.PartNumber();
+        return a.partNumber < b.partNumber;
     });
 
-    FileCompleteRequest completeReq(driveID_, fileID_, uploadID_);
+    FileCompleteRequest completeReq(record_.driveID, record_.fileID, record_.uploadID);
     auto completeOutcome = FileCompleteWrap(completeReq);
     if (!completeOutcome.isSuccess()) {
         return FileCompleteOutcome(completeOutcome.error());
     }
 
-    // TODO: file check, sha1 cacl, rapidupload
+    // check size
+    uint64_t uploadedfileSize = completeOutcome.result().Size();
+    if (fileSize_ != uploadedfileSize) {
+        return FileCompleteOutcome(PdsError("FileSizeCheckError", "Resumable Upload data check size fail."));
+    }
+
+    //check crc64
+    std::string crc64Hash = completeOutcome.result().Crc64Hash();
+    if (client_->configuration().enableCrc64 && !crc64Hash.empty()) {
+        uint64_t localCRC64 = uploadedParts[0].crc64;
+        for (size_t i = 1; i < uploadedParts.size(); i++) {
+            localCRC64 = CRC64::CombineCRC(localCRC64, uploadedParts[i].crc64, uploadedParts[i].size);
+        }
+        uint64_t serverCRC64 = std::strtoull(crc64Hash.c_str(), nullptr, 10);
+        if (localCRC64 != serverCRC64) {
+            return FileCompleteOutcome(PdsError("CrcCheckError", "Resumable Upload data CRC checksum fail."));
+        }
+    }
 
     removeRecordFile();
 
@@ -181,6 +263,8 @@ FileCompleteOutcome ResumableUploader::Upload()
 
 int ResumableUploader::prepare(PdsError& err)
 {
+    // TODO: rapidupload
+
     determinePartSize();
     FileCreateRequest fileCreateReq = FileCreateRequest(request_.DriveID(), request_.ParentFileID(), request_.Name(),
         request_.FileID(), request_.CheckNameMode(), fileSize_);
@@ -195,16 +279,22 @@ int ResumableUploader::prepare(PdsError& err)
         return -1;
     }
 
-    //init record_
-    driveID_ = request_.DriveID();
-    fileID_ = outcome.result().FileID();
-    uploadID_ = outcome.result().UploadID();
-
     if (hasRecordPath()) {
-        Json::Value root;
-
         initRecordInfo();
-        dumpRecordInfo(root);
+        record_.fileID = outcome.result().FileID();
+        record_.uploadID = outcome.result().UploadID();
+
+        Json::Value root;
+        root["opType"] = record_.opType;
+        root["driveID"] = record_.driveID;
+        root["fileID"] = record_.fileID;
+        root["uploadID"] = record_.uploadID;
+        root["name"] = record_.name;
+        root["filePath"] = record_.filePath;
+        root["mtime"] = record_.mtime;
+        root["size"] = record_.size;
+        root["partSize"] = record_.partSize;
+        root["parts"].resize(0);
 
         std::stringstream ss;
         ss << root;
@@ -222,19 +312,36 @@ int ResumableUploader::prepare(PdsError& err)
 
 int ResumableUploader::validateRecord()
 {
-    if (record_.size != fileSize_ || record_.mtime != request_.FileMtime()){
+    auto record = record_;
+
+    if (record.size != fileSize_ || record.mtime != request_.FileMtime()){
         return ARG_ERROR_UPLOAD_FILE_MODIFIED;
     }
 
     Json::Value root;
-
-    dumpRecordInfo(root);
+    root["opType"] = record.opType;
+    root["driveID"] = record.driveID;
+    root["fileID"] = record.fileID;
+    root["uploadID"] = record.uploadID;
+    root["name"] = record.name;
+    root["filePath"] = record.filePath;
+    root["mtime"] = record.mtime;
+    root["size"] = record.size;
+    root["partSize"] = record.partSize;
+    root["parts"].resize(0);
+    int index = 0;
+    for (UploadPartRecord& part : record.parts) {
+        root["parts"][index]["partNumber"] = part.partNumber;
+        root["parts"][index]["size"] = part.size;
+        root["parts"][index]["crc64"] = part.crc64;
+        index++;
+    }
 
     std::stringstream recordStream;
     recordStream << root;
 
     std::string md5Sum = ComputeContentETag(recordStream);
-    if (md5Sum != record_.md5Sum){
+    if (md5Sum != record.md5Sum){
         return ARG_ERROR_UPLOAD_RECORD_INVALID;
     }
     return 0;
@@ -252,14 +359,28 @@ int ResumableUploader::loadRecord()
             return ARG_ERROR_PARSE_UPLOAD_RECORD_FILE;
         }
 
-        buildRecordInfo(root);
+        record_.opType = root["opType"].asString();
+        record_.driveID = root["driveID"].asString();
+        record_.fileID = root["fileID"].asString();
+        record_.uploadID = root["uploadID"].asString();
+        record_.name = root["name"].asString();
+        record_.filePath = root["filePath"].asString();
+        record_.size = root["size"].asUInt64();
+        record_.mtime = root["mtime"].asString();
+        record_.partSize = root["partSize"].asUInt64();
+
+        UploadPartRecord part;
+        for (uint32_t i = 0; i < root["parts"].size(); i++) {
+            Json::Value partValue = root["parts"][i];
+            part.partNumber = partValue["partNumber"].asInt();
+            part.size = partValue["size"].asInt64();
+            part.crc64 = partValue["crc64"].asUInt64();
+            record_.parts.push_back(part);
+        }
+        record_.md5Sum = root["md5Sum"].asString();
 
         partSize_ = record_.partSize;
-        driveID_ = record_.driveID;
-        fileID_ = record_.fileID;
-        uploadID_ = record_.uploadID;
         hasRecord_ = true;
-
         recordStream->close();
     }
 
@@ -297,47 +418,31 @@ void ResumableUploader::genRecordPath()
     }
 }
 
-int ResumableUploader::getPartsToUpload(PdsError &err, PartList &partsUploaded, PartList &partsToUpload)
+int ResumableUploader::getPartsToUpload(PdsError &err, UploadPartRecordList &partsUploaded, UploadPartRecordList &partsToUpload)
 {
+    UNUSED_PARAM(err);
+
     std::set<uint64_t> partNumbersUploaded;
 
     if(hasRecord_){
-        int64_t marker = 0 ;
-        auto listPartsRequest = FileListUploadedPartsRequest(driveID_, fileID_, uploadID_, marker, 100);
-        while(true){
-            listPartsRequest.setMarker(marker);
-            auto outcome = ListUploadedPartsWrap(listPartsRequest);
-            if(!outcome.isSuccess()){
-                err = outcome.error();
-                return -1;
-            }
-
-            auto parts = outcome.result().PartList();
-            for(auto iter = parts.begin(); iter != parts.end(); iter++){
-                partNumbersUploaded.insert(iter->PartNumber());
-                partsUploaded.emplace_back(*iter);
-                consumedSize_ += iter->PartSize();
-            }
-
-            if(!outcome.result().NextMarker().empty()){
-                marker = atoll(outcome.result().NextMarker().c_str());
-            }else{
-                break;
-            }
+        for (UploadPartRecord &part : record_.parts) {
+            partNumbersUploaded.insert(part.partNumber);
+            partsUploaded.emplace_back(part);
+            consumedSize_ += part.size;
         }
     }
 
     int32_t partCount = (int32_t)((fileSize_ - 1)/ partSize_ + 1);
     for(int32_t i = 0; i < partCount; i++){
-        Part part;
-        part.partNumber_ = i+1;
+        UploadPartRecord part;
+        part.partNumber = i+1;
         if (i == partCount -1 ){
-            part.paretSize_ = fileSize_ - partSize_ * (partCount - 1);
+            part.size = fileSize_ - partSize_ * (partCount - 1);
         }else{
-            part.paretSize_ = partSize_;
+            part.size = partSize_;
         }
 
-        auto iterNum = partNumbersUploaded.find(part.PartNumber());
+        auto iterNum = partNumbersUploaded.find(part.partNumber);
         if (iterNum == partNumbersUploaded.end()){
             partsToUpload.push_back(part);
         }
@@ -354,41 +459,12 @@ void ResumableUploader::initRecordInfo()
     }
 
     record_.opType = "ResumableUpload";
-    record_.driveID = driveID_;
-    record_.fileID = fileID_;
-    record_.uploadID = uploadID_;
+    record_.driveID = request_.DriveID();
     record_.name = request_.Name();
     record_.filePath = filePath;
     record_.mtime = request_.FileMtime();
     record_.size = fileSize_;
     record_.partSize = partSize_;
-}
-
-void ResumableUploader::buildRecordInfo(const AlibabaCloud::PDS::Json::Value& root)
-{
-    record_.opType = root["opType"].asString();
-    record_.driveID = root["driveID"].asString();
-    record_.fileID = root["fileID"].asString();
-    record_.uploadID = root["uploadID"].asString();
-    record_.name = root["name"].asString();
-    record_.filePath = root["filePath"].asString();
-    record_.size = root["size"].asUInt64();
-    record_.mtime = root["mtime"].asString();
-    record_.partSize = root["partSize"].asUInt64();
-    record_.md5Sum = root["md5Sum"].asString();
-}
-
-void ResumableUploader::dumpRecordInfo(AlibabaCloud::PDS::Json::Value& root)
-{
-    root["opType"] = record_.opType;
-    root["driveID"] = record_.driveID;
-    root["fileID"] = record_.fileID;
-    root["uploadID"] = record_.uploadID;
-    root["name"] = record_.name;
-    root["filePath"] = record_.filePath;
-    root["mtime"] = record_.mtime;
-    root["size"] = record_.size;
-    root["partSize"] = record_.partSize;
 }
 
 void ResumableUploader::UploadPartProcessCallback(size_t increment, int64_t transfered, int64_t total, void *userData)
@@ -405,6 +481,16 @@ void ResumableUploader::UploadPartProcessCallback(size_t increment, int64_t tran
     if (process.Handler) {
         process.Handler(increment, uploader->consumedSize_, uploader->fileSize_, process.UserData);
     }
+}
+
+int32_t ResumableUploader::UploadPartProcessControlCallback(void *userData)
+{
+    auto uploader = (ResumableUploader*)userData;
+    auto controller = uploader->request_.ProgressControl();
+    if (controller.Handler) {
+        return controller.Handler(controller.UserData);
+    }
+    return 0;
 }
 
 FileCreateOutcome ResumableUploader::FileCreateWrap(const FileCreateRequest &request) const
