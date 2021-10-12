@@ -557,6 +557,7 @@ FileCompleteOutcome PdsClientImpl::ResumableFileUpload(const FileUploadRequest &
         PartInfoReq info(1, request.FileSize(), 0, request.FileSize()-1);
         partInfoReqList.push_back(info);
         fileCreateReq.setPartInfoList(partInfoReqList);
+        fileCreateReq.setUserTags(request.UserTags());
         auto fileCreateOutcome = FileCreate(fileCreateReq);
         if (!fileCreateOutcome.isSuccess()) {
             return FileCompleteOutcome(fileCreateOutcome.error());
@@ -634,7 +635,7 @@ DataGetOutcome PdsClientImpl::ResumableFileDownload(const FileDownloadRequest &r
     if (!fileGetOutcome.isSuccess()) {
         return DataGetOutcome(fileGetOutcome.error());
     }
-    fileGetOutcome.result().PrintString();
+
     auto fileSize = fileGetOutcome.result().Size();
     auto contentHash = fileGetOutcome.result().ContentHash();
     auto crc64Hash = fileGetOutcome.result().Crc64Hash();

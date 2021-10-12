@@ -26,7 +26,3 @@ FileDeleteResult::FileDeleteResult():
         PdsResult()
 {
 }
-
-void FileDeleteResult::PrintString()
-{
-}

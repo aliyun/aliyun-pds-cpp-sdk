@@ -35,7 +35,6 @@ namespace PDS
         int64_t TotalProcess() const { return totalProcess_; }
         int64_t ErrCode() const { return errCode_; }
         const std::string& Url() const { return url_; }
-        void PrintString();
     private:
         std::string asyncTaskID_;
         std::string state_;

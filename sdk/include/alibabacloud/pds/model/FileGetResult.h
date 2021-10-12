@@ -56,7 +56,6 @@ namespace PDS
         const std::string& Url() const { return url_; }
         const std::string& UploadID() const { return uploadID_; }
         const std::map<std::string, std::string>& UserTags() const {return userTags_;}
-        void PrintString();
     private:
         std::string category_;
         std::string contentHash_;

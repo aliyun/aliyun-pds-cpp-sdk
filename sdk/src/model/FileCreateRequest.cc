@@ -65,6 +65,13 @@ std::shared_ptr<std::iostream> FileCreateRequest::Body() const
         index++;
     }
 
+    index = 0;
+    for (const UserTag& userTag : userTags_) {
+        root["user_tags"][index]["key"] = userTag.Key();
+        root["user_tags"][index]["value"] = userTag.Value();
+        index++;
+    }
+
     Json::StreamWriterBuilder builder;
     builder.settings_["indentation"] = "";
     std::shared_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
@@ -76,6 +83,11 @@ std::shared_ptr<std::iostream> FileCreateRequest::Body() const
 void FileCreateRequest::setPartInfoList(const AlibabaCloud::PDS::PartInfoReqList& partInfoReqList)
 {
     partInfoReqList_ = partInfoReqList;
+}
+
+void FileCreateRequest::setUserTags(const AlibabaCloud::PDS::UserTagList& userTags)
+{
+    userTags_ = userTags;
 }
 
 int FileCreateRequest::validate() const

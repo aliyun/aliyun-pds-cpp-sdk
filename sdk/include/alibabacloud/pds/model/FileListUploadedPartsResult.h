@@ -35,7 +35,6 @@ namespace PDS
         const std::string UploadID() const { return uploadID_; }
         const std::string NextMarker() const { return nextMarker_; }
         const AlibabaCloud::PDS::PartList& PartList() const { return partList_; }
-        void PrintString();
     private:
         std::string fileID_;
         std::string uploadID_;

@@ -35,6 +35,13 @@ std::string ResumableSample::ResumableFileUpload()
 {
     std::string fileID;
     FileUploadRequest uploadRequest(Config::DriveID, Config::RootParentID, "test_resumable_file", "", "refuse", Config::FileToUpload, "checkpoint_dir");
+
+    // set user tags when create
+    UserTagList userTagList;
+    UserTag userTag("key", "value");
+    userTagList.push_back(userTag);
+    uploadRequest.setUserTags(userTagList);
+
     TransferProgress progressCallback = { ProgressCallback , this };
     uploadRequest.setTransferProgress(progressCallback);
     auto uploadOutcome = client->ResumableFileUpload(uploadRequest);
@@ -42,8 +49,9 @@ std::string ResumableSample::ResumableFileUpload()
         PrintError(__FUNCTION__, uploadOutcome.error());
         return fileID;
     }
-    uploadOutcome.result().PrintString();
+
     fileID = uploadOutcome.result().FileID();
+    std::cout << __FUNCTION__ << " call ResumableFileUpload success, file id: " << fileID << std::endl;
 
     return fileID;
 }
@@ -63,9 +71,8 @@ std::string ResumableSample::ResumableFileUploadStopOnce()
     if (!uploadOutcome.isSuccess()) {
         PrintError(__FUNCTION__, uploadOutcome.error());
     } else {
-        std::cout << __FUNCTION__ << " upload file success" << std::endl;
-        uploadOutcome.result().PrintString();
         fileID = uploadOutcome.result().FileID();
+        std::cout << __FUNCTION__ << " first time call ResumableFileUpload success, file id: " << fileID << std::endl;
         return fileID;
     }
 
@@ -76,9 +83,8 @@ std::string ResumableSample::ResumableFileUploadStopOnce()
         PrintError(__FUNCTION__, uploadOutcome.error());
         return fileID;
     } else {
-        std::cout << __FUNCTION__ << " upload file success" << std::endl;
-        uploadOutcome.result().PrintString();
         fileID = uploadOutcome.result().FileID();
+        std::cout << __FUNCTION__ << " second time call ResumableFileUpload success, file id: " << fileID << std::endl;
     }
 
     return fileID;
@@ -100,9 +106,8 @@ std::string ResumableSample::ResumableFileUploadCancel()
         PrintError(__FUNCTION__, uploadOutcome.error());
         return fileID;
     } else {
-        std::cout << __FUNCTION__ << " upload file success" << std::endl;
-        uploadOutcome.result().PrintString();
         fileID = uploadOutcome.result().FileID();
+        std::cout << __FUNCTION__ << " call ResumableFileUpload success, file id: " << fileID << std::endl;
     }
     return fileID;
 }
@@ -117,7 +122,7 @@ void ResumableSample::ResumableFileDownload(const std::string& fileID)
         PrintError(__FUNCTION__, getOutcome.error());
     }
     else {
-        std::cout << __FUNCTION__ << " download file success" << std::endl;
+        std::cout << __FUNCTION__ << " call ResumableFileDownload success" << std::endl;
     }
 }
 
@@ -136,7 +141,8 @@ void ResumableSample::ResumableFileDownloadStopOnce(const std::string& fileID)
         PrintError(__FUNCTION__, getOutcome.error());
     }
     else {
-        std::cout << __FUNCTION__ << " download file success" << std::endl;
+        std::cout << __FUNCTION__ << " first time call ResumableFileDownload success" << std::endl;
+        return;
     }
 
     ProgressControl progressControlCallback = { ProgressControlCallback , this };
@@ -146,7 +152,7 @@ void ResumableSample::ResumableFileDownloadStopOnce(const std::string& fileID)
         PrintError(__FUNCTION__, getOutcome.error());
     }
     else {
-        std::cout << __FUNCTION__ << " download file success" << std::endl;
+        std::cout << __FUNCTION__ << " second time call ResumableFileDownload success" << std::endl;
     }
 }
 
@@ -165,6 +171,6 @@ void ResumableSample::ResumableFileDownloadCancel(const std::string& fileID)
         PrintError(__FUNCTION__, getOutcome.error());
     }
     else {
-        std::cout << __FUNCTION__ << " download file success" << std::endl;
+        std::cout << __FUNCTION__ << " call ResumableFileDownload success" << std::endl;
     }
 }

@@ -78,29 +78,3 @@ FileGetResult::FileGetResult(
         }
     }
 }
-
-void FileGetResult::PrintString()
-{
-    std::cout << "category: " << category_ <<
-        ", content_hash:" << contentHash_ <<
-        ", content_type: " << contentType_ <<
-        ", created_at:" << createdAt_ <<
-        ", domain_id:" << domainID_ <<
-        ", download_url: " << downloadUrl_ <<
-        ", drive_id:" << driveID_ <<
-        ", file_id: " << fileID_ <<
-        ", name: " << name_ <<
-        ", parent_file_id: " << parentFileID_ <<
-        ", size: " << size_ <<
-        ", thumbnail: " << type_ <<
-        ", type: " << thumbnail_ <<
-        ", trashed: " << trashed_ <<
-        ", updated_at: " << updatedAT_ <<
-        ", url: " << url_ <<
-        ", upload_id: " << uploadID_ <<std::endl;
-
-    for (auto iter = userTags_.begin(); iter != userTags_.end() ;iter++) {
-        std::cout << "------ key: " << iter->first <<
-        ", value:" << iter->second << std::endl;
-    }
-}

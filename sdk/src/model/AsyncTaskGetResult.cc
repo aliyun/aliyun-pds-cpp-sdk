@@ -46,14 +46,3 @@ AsyncTaskGetResult::AsyncTaskGetResult(
     errCode_ = root["err_code"].asInt64();
     url_ = root["url"].asString();
 }
-
-void AsyncTaskGetResult::PrintString()
-{
-    std::cout << "async_task_id: " << asyncTaskID_ <<
-        ", state:" << state_ <<
-        ", message:" << message_ <<
-        ", consumed_process: " << consumedProcess_ <<
-        ", total_process: " << totalProcess_ <<
-        ", err_code: " << errCode_ <<
-        ", url: " << url_ << std::endl;
-}

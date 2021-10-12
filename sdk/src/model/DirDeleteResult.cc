@@ -43,11 +43,3 @@ DirDeleteResult::DirDeleteResult(
     fileID_ = root["file_id"].asString();
     asyncTaskID_ = root["async_task_id"].asString();
 }
-
-void DirDeleteResult::PrintString()
-{
-    std::cout << "domain_id: " << domainID_ <<
-        ", drive_id:" << driveID_ <<
-        ", file_id: " << fileID_ <<
-        ", async_task_id: " << asyncTaskID_ << std::endl;
-}

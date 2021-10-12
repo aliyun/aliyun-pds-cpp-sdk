@@ -27,7 +27,6 @@ namespace PDS
     {
     public:
         FileTrashResult();
-        void PrintString();
     };
 }
 }

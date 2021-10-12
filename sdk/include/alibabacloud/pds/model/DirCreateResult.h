@@ -34,7 +34,6 @@ namespace PDS
         const std::string& FileName() const { return fileName_; }
         const std::string& ParentFileID() const { return parentFileID_; }
         const std::string& Type() const { return type_; }
-        void PrintString();
     private:
         std::string domainID_;
         std::string driveID_;

@@ -53,10 +53,3 @@ FileListUploadedPartsResult::FileListUploadedPartsResult(
         partList_.push_back(p);
     }
 }
-
-void FileListUploadedPartsResult::PrintString()
-{
-    std::cout << "domain_id: " << fileID_ <<
-        ", upload_id: " << uploadID_ <<
-        ", item number:" << partList_.size() << std::endl;
-}

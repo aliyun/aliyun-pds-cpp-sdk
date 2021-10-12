@@ -41,21 +41,9 @@ DirRenameResult::DirRenameResult(
     domainID_ = root["domain_id"].asString();
     driveID_ = root["drive_id"].asString();
     fileID_ = root["file_id"].asString();
-    fileName_ = root["name"].asString();
+    name_ = root["name"].asString();
     parentFileID_ = root["parent_file_id"].asString();
     type_ = root["type"].asString();
     createdAt_ = root["created_at"].asString();
     updatedAt_ = root["updated_at"].asString();
-}
-
-void DirRenameResult::PrintString()
-{
-    std::cout << "domain_id: " << domainID_ <<
-        ", drive_id:" << driveID_ <<
-        ", file_id: " << fileID_ <<
-        ", name: " << fileName_ <<
-        ", parent_file_id: " << parentFileID_ <<
-        ", type: " << type_ <<
-        ", created_at: " << createdAt_ <<
-        ", updated_at: " << updatedAt_ << std::endl;
 }

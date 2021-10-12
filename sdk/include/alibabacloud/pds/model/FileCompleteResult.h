@@ -49,7 +49,6 @@ namespace PDS
         const std::string& Type() const { return type_; }
         const std::string& UpdatedAT() const { return updatedAT_; }
         const std::string& UploadID() const { return uploadID_; }
-        void PrintString();
     private:
         std::string category_;
         std::string contentHash_;

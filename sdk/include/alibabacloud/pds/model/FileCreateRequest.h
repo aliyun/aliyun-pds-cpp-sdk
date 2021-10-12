@@ -19,12 +19,14 @@
 #include <alibabacloud/pds/PdsRequest.h>
 #include <alibabacloud/pds/Types.h>
 #include <alibabacloud/pds/model/PartInfoReq.h>
+#include <alibabacloud/pds/model/MetaUserTag.h>
 
 namespace AlibabaCloud
 {
 namespace PDS
 {
     using PartInfoReqList = std::vector<PartInfoReq>;
+    using UserTagList = std::vector<UserTag>;
     class ALIBABACLOUD_PDS_EXPORT FileCreateRequest: public PdsRequest
     {
     public:
@@ -34,6 +36,7 @@ namespace PDS
         virtual std::shared_ptr<std::iostream> Body() const;
 
         void setPartInfoList(const AlibabaCloud::PDS::PartInfoReqList& partInfoReqList);
+        void setUserTags(const AlibabaCloud::PDS::UserTagList& userTags);
 
     protected:
         int validate() const;
@@ -47,6 +50,7 @@ namespace PDS
         int64_t size_;
         std::string type_;
         AlibabaCloud::PDS::PartInfoReqList partInfoReqList_;
+        AlibabaCloud::PDS::UserTagList userTags_;
     };
 }
 }

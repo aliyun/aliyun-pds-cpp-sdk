@@ -268,6 +268,7 @@ int ResumableUploader::prepare(PdsError& err)
     determinePartSize();
     FileCreateRequest fileCreateReq = FileCreateRequest(request_.DriveID(), request_.ParentFileID(), request_.Name(),
         request_.FileID(), request_.CheckNameMode(), fileSize_);
+    fileCreateReq.setUserTags(request_.UserTags());
     auto outcome = FileCreateWrap(fileCreateReq);
     if(!outcome.isSuccess()){
         err = outcome.error();

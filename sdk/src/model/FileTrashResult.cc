@@ -26,7 +26,3 @@ FileTrashResult::FileTrashResult():
         PdsResult()
 {
 }
-
-void FileTrashResult::PrintString()
-{
-}

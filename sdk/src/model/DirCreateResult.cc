@@ -45,13 +45,3 @@ DirCreateResult::DirCreateResult(
     parentFileID_ = root["parent_file_id"].asString();
     type_ = root["type"].asString();
 }
-
-void DirCreateResult::PrintString()
-{
-    std::cout << "domain_id: " << domainID_ <<
-        ", drive_id:" << driveID_ <<
-        ", file_id: " << fileID_ <<
-        ", file_name: " << fileName_ <<
-        ", parent_file_id: " << parentFileID_ <<
-        ", type: " << type_ << std::endl;
-}

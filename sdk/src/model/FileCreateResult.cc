@@ -58,16 +58,3 @@ FileCreateResult::FileCreateResult(
         partInfoRespList_.push_back(part);
     }
 }
-
-void FileCreateResult::PrintString()
-{
-    std::cout << "domain_id: " << domainID_ <<
-        ", drive_id:" << driveID_ <<
-        ", file_id: " << fileID_ <<
-        ", file_name: " << fileName_ <<
-        ", parent_file_id: " << parentFileID_ <<
-        ", type: " << type_ <<
-        ", rapid_upload: " << rapidUpload_ <<
-        ", upload_id: " << uploadID_ <<
-        ", exist: " << exist_ << std::endl;
-}

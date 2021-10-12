@@ -59,14 +59,3 @@ FileCompleteResult::FileCompleteResult(
     updatedAT_ = root["updated_at"].asString();
     uploadID_ = root["upload_id"].asString();
 }
-
-void FileCompleteResult::PrintString()
-{
-    std::cout << "domain_id: " << domainID_ <<
-        ", drive_id:" << driveID_ <<
-        ", file_id: " << fileID_ <<
-        ", file_name: " << name_ <<
-        ", parent_file_id: " << parentFileID_ <<
-        ", type: " << type_ <<
-        ", upload_id: " << uploadID_ <<std::endl;
-}

@@ -36,18 +36,15 @@ void ShareLinkSample::FileDownload(const std::string& fileID)
     fileGetRequest.setShareToken(Config::ShareToken);
 
     auto getOutcome = client->FileGet(fileGetRequest);
-    if (getOutcome.isSuccess()) {
-        getOutcome.result().PrintString();
-    }
-    else {
+    if (!getOutcome.isSuccess()) {
         PrintError(__FUNCTION__, getOutcome.error());
         return;
     }
-    getOutcome.result().PrintString();
+    std::cout << __FUNCTION__ << " call FileGet success" << std::endl;
 
     std::string downloadURl = getOutcome.result().DownloadUrl();
     int64_t size = getOutcome.result().Size();
-    std::cout << __FUNCTION__ << " download url:" << downloadURl << ", size:" << size << std::endl;
+    std::cout << __FUNCTION__ << " download url: " << downloadURl << ", size: " << size << std::endl;
 
     // download from OSS
     DataGetByUrlRequest downloadDataRequest(downloadURl);
@@ -56,9 +53,10 @@ void ShareLinkSample::FileDownload(const std::string& fileID)
     auto downloadDataOutcome = client->DataGetByUrl(downloadDataRequest);
     if (!downloadDataOutcome.isSuccess()) {
         PrintError(__FUNCTION__, downloadDataOutcome.error());
+        return;
     }
 
-    std::cout << __FUNCTION__ << " download data success" << std::endl;
+    std::cout << __FUNCTION__ << " call DataGetByUrl to download data success" << std::endl;
 }
 
 
@@ -72,10 +70,9 @@ void ShareLinkSample::ResumableFileDownload(const std::string& fileID)
     auto getOutcome = client->ResumableFileDownload(downloadRequest);
     if (!getOutcome.isSuccess()) {
         PrintError(__FUNCTION__, getOutcome.error());
+        return;
     }
-    else {
-        std::cout << __FUNCTION__ << " download file success" << std::endl;
-    }
+    std::cout << __FUNCTION__ << " call ResumableFileDownload success" << std::endl;
 }
 
 void ShareLinkSample::ResumableFileDownloadStopOnce(const std::string& fileID)
@@ -95,7 +92,8 @@ void ShareLinkSample::ResumableFileDownloadStopOnce(const std::string& fileID)
         PrintError(__FUNCTION__, getOutcome.error());
     }
     else {
-        std::cout << __FUNCTION__ << " download file success" << std::endl;
+        std::cout << __FUNCTION__ << " first time call ResumableFileDownload success" << std::endl;
+        return;
     }
 
     ProgressControl progressControlCallback = { ProgressControlCallback , this };
@@ -105,7 +103,7 @@ void ShareLinkSample::ResumableFileDownloadStopOnce(const std::string& fileID)
         PrintError(__FUNCTION__, getOutcome.error());
     }
     else {
-        std::cout << __FUNCTION__ << " download file success" << std::endl;
+        std::cout << __FUNCTION__ << "second time call ResumableFileDownload success" << std::endl;
     }
 }
 
@@ -124,8 +122,7 @@ void ShareLinkSample::ResumableFileDownloadCancel(const std::string& fileID)
     auto getOutcome = client->ResumableFileDownload(downloadRequest);
     if (!getOutcome.isSuccess()) {
         PrintError(__FUNCTION__, getOutcome.error());
+        return;
     }
-    else {
-        std::cout << __FUNCTION__ << " download file success" << std::endl;
-    }
+    std::cout << __FUNCTION__ << " call ResumableFileDownload success" << std::endl;
 }

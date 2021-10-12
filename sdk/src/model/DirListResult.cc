@@ -47,9 +47,3 @@ DirListResult::DirListResult(
         fileItemList_.push_back(item);
     }
 }
-
-void DirListResult::PrintString()
-{
-    std::cout << "next_marker: " << nextMarker_ <<
-        ", item number:" << fileItemList_.size() << std::endl;
-}

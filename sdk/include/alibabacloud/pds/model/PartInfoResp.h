@@ -34,7 +34,7 @@ namespace PDS
         int64_t PartNumber() const { return partNumber_; }
         int64_t PartSize() const { return partSize_; }
         std::string UploadUrl() const { return uploadUrl_; }
-    public:
+    private:
         int64_t partNumber_;
         int64_t partSize_;
         std::string uploadUrl_;

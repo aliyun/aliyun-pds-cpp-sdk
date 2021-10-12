@@ -53,12 +53,3 @@ FileGetUploadUrlResult::FileGetUploadUrlResult(
         partInfoRespList_.push_back(part);
     }
 }
-
-void FileGetUploadUrlResult::PrintString()
-{
-    std::cout << "domain_id: " << domainID_ <<
-        ", drive_id:" << driveID_ <<
-        ", file_id: " << fileID_ <<
-        ", upload_id: " << uploadID_ <<
-        ", item number:" << partInfoRespList_.size() << std::endl;
-}

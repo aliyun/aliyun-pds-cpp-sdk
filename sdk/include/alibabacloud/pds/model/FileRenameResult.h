@@ -31,17 +31,16 @@ namespace PDS
         const std::string& DomainID() const { return domainID_; }
         const std::string& DriveID() const { return driveID_; }
         const std::string& FileID() const { return fileID_; }
-        const std::string& FileName() const { return fileName_; }
+        const std::string& Name() const { return name_; }
         const std::string& ParentFileID() const { return parentFileID_; }
         const std::string& Type() const { return type_; }
         const std::string& CreatedAt() const { return createdAt_; }
         const std::string& UpdatedAt() const { return updatedAt_; }
-        void PrintString();
     private:
         std::string domainID_;
         std::string driveID_;
         std::string fileID_;
-        std::string fileName_;
+        std::string name_;
         std::string parentFileID_;
         std::string type_;
         std::string createdAt_;

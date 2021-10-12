@@ -27,7 +27,6 @@ namespace PDS
     {
     public:
         FileDeleteResult();
-        void PrintString();
     };
 }
 }

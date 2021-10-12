@@ -32,7 +32,6 @@ namespace PDS
         DirListResult(const std::shared_ptr<std::iostream>& content);
         const AlibabaCloud::PDS::FileItemList& FileItemList() const { return fileItemList_; }
         const std::string& NextMarker() const { return nextMarker_; }
-        void PrintString();
     private:
         AlibabaCloud::PDS::FileItemList fileItemList_;
         std::string nextMarker_;

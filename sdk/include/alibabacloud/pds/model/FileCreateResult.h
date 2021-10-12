@@ -40,7 +40,6 @@ namespace PDS
         const std::string& UploadID() const { return uploadID_; }
         bool Exist() const { return exist_; }
         const AlibabaCloud::PDS::PartInfoRespList& PartInfoRespList() const { return partInfoRespList_; }
-        void PrintString();
     private:
         std::string domainID_;
         std::string driveID_;

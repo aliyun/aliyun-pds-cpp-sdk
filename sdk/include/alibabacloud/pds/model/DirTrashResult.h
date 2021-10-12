@@ -32,7 +32,6 @@ namespace PDS
         const std::string& DriveID() const { return driveID_; }
         const std::string& FileID() const { return fileID_; }
         const std::string& AsyncTaskID() const { return asyncTaskID_; }
-        void PrintString();
     private:
         std::string domainID_;
         std::string driveID_;
