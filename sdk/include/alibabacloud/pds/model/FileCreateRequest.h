@@ -37,7 +37,8 @@ namespace PDS
 
         void setPartInfoList(const AlibabaCloud::PDS::PartInfoReqList& partInfoReqList);
         void setUserTags(const AlibabaCloud::PDS::UserTagList& userTags);
-
+        void setPreHash(const std::string& preHash);
+        void setContentHash(const std::string& contentHash);
     protected:
         int validate() const;
     private:
@@ -51,6 +52,8 @@ namespace PDS
         std::string type_;
         AlibabaCloud::PDS::PartInfoReqList partInfoReqList_;
         AlibabaCloud::PDS::UserTagList userTags_;
+        std::string preHash_;
+        std::string contentHash_;
     };
 }
 }

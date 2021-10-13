@@ -48,6 +48,8 @@
 #include <alibabacloud/pds/model/FileListUploadedPartsResult.h>
 #include <alibabacloud/pds/model/FileCompleteRequest.h>
 #include <alibabacloud/pds/model/FileCompleteResult.h>
+#include <alibabacloud/pds/model/FileGetDownloadUrlRequest.h>
+#include <alibabacloud/pds/model/FileGetDownloadUrlResult.h>
 #include <alibabacloud/pds/model/FileGetRequest.h>
 #include <alibabacloud/pds/model/FileGetResult.h>
 #include <alibabacloud/pds/model/FileDeleteRequest.h>
@@ -91,6 +93,7 @@ namespace PDS
     using FileGetUploadUrlOutcome = Outcome<PdsError, FileGetUploadUrlResult>;
     using FileListUploadedPartsOutcome = Outcome<PdsError, FileListUploadedPartsResult>;
     using FileCompleteOutcome = Outcome<PdsError, FileCompleteResult>;
+    using FileGetDownloadUrlOutcome = Outcome<PdsError, FileGetDownloadUrlResult>;
     using FileGetOutcome = Outcome<PdsError, FileGetResult>;
     using FileRenameOutcome = Outcome<PdsError, FileRenameResult>;
     using FileTrashOutcome = Outcome<PdsError, FileTrashResult>;

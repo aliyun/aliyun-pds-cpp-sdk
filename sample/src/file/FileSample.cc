@@ -102,15 +102,15 @@ std::string FileSample::FileCreate()
 
 void FileSample::FileDownload(const std::string& fileID)
 {
-    FileGetRequest request(Config::DriveID, "", fileID);
-    auto getOutcome = client->FileGet(request);
+    FileGetDownloadUrlRequest request(Config::DriveID, "", fileID);
+    auto getOutcome = client->FileGetDownloadUrl(request);
     if (!getOutcome.isSuccess()) {
         PrintError(__FUNCTION__, getOutcome.error());
         return;
     }
-    std::cout << __FUNCTION__ << " call FileGet success, file id: " << fileID << std::endl;
+    std::cout << __FUNCTION__ << " call FileGetDownloadUrl success, file id: " << fileID << std::endl;
 
-    std::string downloadURl = getOutcome.result().DownloadUrl();
+    std::string downloadURl = getOutcome.result().Url();
     int64_t size = getOutcome.result().Size();
     std::cout << __FUNCTION__ << " download url:" << downloadURl << ", size:" << size << std::endl;
 

@@ -148,6 +148,11 @@ FileCompleteOutcome PdsClient::FileComplete(const FileCompleteRequest& request) 
     return client_->FileComplete(request);
 }
 
+FileGetDownloadUrlOutcome PdsClient::FileGetDownloadUrl(const FileGetDownloadUrlRequest& request) const
+{
+    return client_->FileGetDownloadUrl(request);
+}
+
 FileGetOutcome PdsClient::FileGet(const FileGetRequest& request) const
 {
     return client_->FileGet(request);

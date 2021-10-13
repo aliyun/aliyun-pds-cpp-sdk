@@ -32,17 +32,17 @@ void ShareLinkSample::PrintError(const std::string &funcName, const PdsError &er
 
 void ShareLinkSample::FileDownload(const std::string& fileID)
 {
-    FileGetRequest fileGetRequest("", Config::ShareID, fileID);
-    fileGetRequest.setShareToken(Config::ShareToken);
+    FileGetDownloadUrlRequest request("", Config::ShareID, fileID);
+    request.setShareToken(Config::ShareToken);
 
-    auto getOutcome = client->FileGet(fileGetRequest);
+    auto getOutcome = client->FileGetDownloadUrl(request);
     if (!getOutcome.isSuccess()) {
         PrintError(__FUNCTION__, getOutcome.error());
         return;
     }
-    std::cout << __FUNCTION__ << " call FileGet success" << std::endl;
+    std::cout << __FUNCTION__ << " call FileGetDownloadUrl success" << std::endl;
 
-    std::string downloadURl = getOutcome.result().DownloadUrl();
+    std::string downloadURl = getOutcome.result().Url();
     int64_t size = getOutcome.result().Size();
     std::cout << __FUNCTION__ << " download url: " << downloadURl << ", size: " << size << std::endl;
 

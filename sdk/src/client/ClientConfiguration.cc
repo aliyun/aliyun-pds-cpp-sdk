@@ -112,6 +112,7 @@ ClientConfiguration::ClientConfiguration() :
     verifySSL(true),
     isCname(false),
     enableCrc64(true),
+    enableRapidUpload(false),
     sendRateLimiter(nullptr),
     recvRateLimiter(nullptr),
     executor(nullptr),

@@ -32,22 +32,26 @@ namespace PDS
         FileCreateResult(const std::shared_ptr<std::iostream>& content);
         const std::string& DomainID() const { return domainID_; }
         const std::string& DriveID() const { return driveID_; }
+        const std::string& EncryptMode() const { return encryptMode_; }
         const std::string& FileID() const { return fileID_; }
         const std::string& FileName() const { return fileName_; }
+        const std::string& Location() const { return location_; }
         const std::string& ParentFileID() const { return parentFileID_; }
-        const std::string& Type() const { return type_; }
         bool RapidUpload() const { return rapidUpload_; }
+        const std::string& Type() const { return type_; }
         const std::string& UploadID() const { return uploadID_; }
         bool Exist() const { return exist_; }
         const AlibabaCloud::PDS::PartInfoRespList& PartInfoRespList() const { return partInfoRespList_; }
     private:
         std::string domainID_;
         std::string driveID_;
+        std::string encryptMode_;
         std::string fileID_;
         std::string fileName_;
+        std::string location_;
         std::string parentFileID_;
-        std::string type_;
         bool rapidUpload_;
+        std::string type_;
         std::string uploadID_;
         bool exist_;
         AlibabaCloud::PDS::PartInfoRespList partInfoRespList_;

@@ -442,6 +442,17 @@ FileCompleteOutcome PdsClientImpl::FileComplete(const FileCompleteRequest& reque
     }
 }
 
+FileGetDownloadUrlOutcome PdsClientImpl::FileGetDownloadUrl(const FileGetDownloadUrlRequest& request) const
+{
+    auto outcome = MakeRequest(request, Http::Method::Post);
+    if (outcome.isSuccess()) {
+        return FileGetDownloadUrlOutcome(FileGetDownloadUrlResult(outcome.result().payload()));
+    }
+    else {
+        return FileGetDownloadUrlOutcome(outcome.error());
+    }
+}
+
 FileGetOutcome PdsClientImpl::FileGet(const FileGetRequest& request) const
 {
     auto outcome = MakeRequest(request, Http::Method::Post);
@@ -546,35 +557,107 @@ FileCompleteOutcome PdsClientImpl::ResumableFileUpload(const FileUploadRequest &
 
     if (request.FileSize() <= request.PartSize())
     {
-        auto content = GetFstreamByPath(request.FilePath(), request.FilePathW(),
-            std::ios::in | std::ios::binary);
-
-        // pds create
-        auto fileCreateReq = FileCreateRequest(request.DriveID(), request.ParentFileID(), request.Name(),
-            request.FileID(), request.CheckNameMode(), request.FileSize());
-
         PartInfoReqList partInfoReqList;
         PartInfoReq info(1, request.FileSize(), 0, request.FileSize()-1);
         partInfoReqList.push_back(info);
-        fileCreateReq.setPartInfoList(partInfoReqList);
-        fileCreateReq.setUserTags(request.UserTags());
-        auto fileCreateOutcome = FileCreate(fileCreateReq);
-        if (!fileCreateOutcome.isSuccess()) {
-            return FileCompleteOutcome(fileCreateOutcome.error());
-        }
-        if (fileCreateOutcome.result().Exist()) {
-            return FileCompleteOutcome(PdsError("Same name file exist", "Same name file exist."));
+
+        FileCreateResult fileCreateResult;
+        // rapid upload
+        if (configuration().enableRapidUpload) {
+            // caculate pre hash
+            uint64_t preHashBlockSize = 1024;
+            if (preHashBlockSize > request.FileSize()) {
+                preHashBlockSize = request.FileSize();
+            }
+
+            auto content = GetFstreamByPath(request.FilePath(), request.FilePathW(),
+            std::ios::in | std::ios::binary);
+            char streamBuffer[1024];
+            uint64_t readSize = 0;
+            if (!content->good()) {
+                return FileCompleteOutcome(PdsError("ReadFileError", "Failed to read input file"));
+            }
+            content->read(streamBuffer, preHashBlockSize);
+            readSize = static_cast<uint64_t>(content->gcount());
+            content->close();
+
+            if (readSize != preHashBlockSize) {
+                return FileCompleteOutcome(PdsError("ReadFileError", "Failed to read enough size for caculate pre hash"));
+            }
+            std::string preHashSHA1 = ComputeContentSha1(streamBuffer, preHashBlockSize);
+
+            // check pre hash request
+            auto fileCreatePreCheckReq = FileCreateRequest(request.DriveID(), request.ParentFileID(), request.Name(),
+                request.FileID(), request.CheckNameMode(), request.FileSize());
+            fileCreatePreCheckReq.setPreHash(preHashSHA1);
+            fileCreatePreCheckReq.setPartInfoList(partInfoReqList);
+            fileCreatePreCheckReq.setUserTags(request.UserTags());
+            auto fileCreatePreCheckOutcome = FileCreate(fileCreatePreCheckReq);
+
+            if (!fileCreatePreCheckOutcome.isSuccess()) {
+                // check pre hash error
+                if (fileCreatePreCheckOutcome.error().Code() != "PreHashMatched") {
+                    return FileCompleteOutcome(fileCreatePreCheckOutcome.error());
+                }
+
+                // check pre hash matched, rapid upload
+                auto content = GetFstreamByPath(request.FilePath(), request.FilePathW(),
+                std::ios::in | std::ios::binary);
+                std::string hashSHA1 = ComputeContentSha1(*content);
+                content->close();
+
+                // rapid upload request
+                auto fileCreateRapidUploadReq = FileCreateRequest(request.DriveID(), request.ParentFileID(), request.Name(),
+                    request.FileID(), request.CheckNameMode(), request.FileSize());
+                fileCreateRapidUploadReq.setContentHash(hashSHA1);
+                fileCreateRapidUploadReq.setPartInfoList(partInfoReqList);
+                fileCreateRapidUploadReq.setUserTags(request.UserTags());
+                auto fileCreateRapidUploadOutcome = FileCreate(fileCreateRapidUploadReq);
+
+                if (!fileCreateRapidUploadOutcome.isSuccess()) {
+                    return FileCompleteOutcome(fileCreateRapidUploadOutcome.error());
+                }
+
+                // rapid upload success
+                if (fileCreateRapidUploadOutcome.result().RapidUpload()) {
+                    FileCompleteResult result(fileCreateRapidUploadOutcome.result());
+                    return FileCompleteOutcome(result);
+                }
+
+                // failed to rapid upload, upload data
+                fileCreateResult = fileCreateRapidUploadOutcome.result();
+            } else {
+                // pre hash check not matched, upload data
+                fileCreateResult = fileCreatePreCheckOutcome.result();
+            }
+        } else {
+            // create by upload data
+            auto fileCreateReq = FileCreateRequest(request.DriveID(), request.ParentFileID(), request.Name(),
+                request.FileID(), request.CheckNameMode(), request.FileSize());
+            fileCreateReq.setPartInfoList(partInfoReqList);
+            fileCreateReq.setUserTags(request.UserTags());
+            auto fileCreateOutcome = FileCreate(fileCreateReq);
+            if (!fileCreateOutcome.isSuccess()) {
+                return FileCompleteOutcome(fileCreateOutcome.error());
+            }
+            fileCreateResult = fileCreateOutcome.result();
         }
 
-        std::string fileID = fileCreateOutcome.result().FileID();
-        std::string uploadID = fileCreateOutcome.result().UploadID();
-        PartInfoRespList partInfoRespList = fileCreateOutcome.result().PartInfoRespList();
-        if (partInfoRespList.size() == 0) {
-            return FileCompleteOutcome(PdsError("Get Upload Url error", "Get Upload url empty."));
+        if (fileCreateResult.Exist()) {
+            return FileCompleteOutcome(PdsError("SameNameFileExist", "Same name file exist."));
         }
+
+        std::string fileID = fileCreateResult.FileID();
+        std::string uploadID = fileCreateResult.UploadID();
+        PartInfoRespList partInfoRespList = fileCreateResult.PartInfoRespList();
+        if (partInfoRespList.size() == 0) {
+            return FileCompleteOutcome(PdsError("GetUploadUrlError", "Get Upload url empty."));
+        }
+        std::string uploadURl = partInfoRespList[0].UploadUrl();
 
         // upload data
-        std::string uploadURl = partInfoRespList[0].UploadUrl();
+        auto content = GetFstreamByPath(request.FilePath(), request.FilePathW(),
+            std::ios::in | std::ios::binary);
         DataPutByUrlRequest putPartRequest(uploadURl, content);
         if (request.TransferProgress().Handler) {
             putPartRequest.setTransferProgress(request.TransferProgress());
@@ -628,18 +711,18 @@ DataGetOutcome PdsClientImpl::ResumableFileDownload(const FileDownloadRequest &r
         return DataGetOutcome(PdsError("ValidateError", reqeustBase.validateMessage(code)));
     }
 
-    auto fileGetReq = FileGetRequest(request.DriveID(), request.ShareID(), request.FileID());
-    fileGetReq.setShareToken(request.ShareToken());
+    auto getDownloadUrlReq = FileGetDownloadUrlRequest(request.DriveID(), request.ShareID(), request.FileID());
+    getDownloadUrlReq.setShareToken(request.ShareToken());
 
-    auto fileGetOutcome = FileGet(fileGetReq);
-    if (!fileGetOutcome.isSuccess()) {
-        return DataGetOutcome(fileGetOutcome.error());
+    auto getDownloadUrlOutcome = FileGetDownloadUrl(getDownloadUrlReq);
+    if (!getDownloadUrlOutcome.isSuccess()) {
+        return DataGetOutcome(getDownloadUrlOutcome.error());
     }
 
-    auto fileSize = fileGetOutcome.result().Size();
-    auto contentHash = fileGetOutcome.result().ContentHash();
-    auto crc64Hash = fileGetOutcome.result().Crc64Hash();
-    auto url = fileGetOutcome.result().Url();
+    auto fileSize = getDownloadUrlOutcome.result().Size();
+    auto contentHash = getDownloadUrlOutcome.result().ContentHash();
+    auto crc64Hash = getDownloadUrlOutcome.result().Crc64Hash();
+    auto url = getDownloadUrlOutcome.result().Url();
 
     if (fileSize < (int64_t)request.PartSize()) {
         auto getDataReq = DataGetByUrlRequest(url);

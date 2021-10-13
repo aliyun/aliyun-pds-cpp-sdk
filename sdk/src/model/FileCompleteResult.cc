@@ -27,6 +27,21 @@ FileCompleteResult::FileCompleteResult():
 {
 }
 
+FileCompleteResult::FileCompleteResult(const AlibabaCloud::PDS::FileCreateResult& createResult):
+        PdsResult()
+{
+    domainID_ = createResult.DomainID();
+    driveID_ = createResult.DriveID();
+    encryptMode_ = createResult.EncryptMode();
+    fileID_ = createResult.FileID();
+    name_ = createResult.FileName();
+    location_ = createResult.Location();
+    parentFileID_ = createResult.ParentFileID();
+    rapidUpload_ = createResult.RapidUpload();
+    type_ = createResult.Type();
+    uploadID_ = createResult.UploadID();
+}
+
 FileCompleteResult::FileCompleteResult(
         const std::shared_ptr<std::iostream>& content)
 {
@@ -49,9 +64,11 @@ FileCompleteResult::FileCompleteResult(
     encryptMode_ = root["encrypt_mode"].asString();
     fileExtension_ = root["file_extension"].asString();
     fileID_ = root["file_id"].asString();
+    location_ = root["location"].asString();
     hidden_ = root["hidden"].asBool();
     name_ = root["name"].asString();
     parentFileID_ = root["parent_file_id"].asString();
+    rapidUpload_ = root["rapid_upload"].asBool(); // default value false
     size_ = root["size"].asInt64();
     starred_ = root["starred"].asBool();
     status_ = root["status"].asString();

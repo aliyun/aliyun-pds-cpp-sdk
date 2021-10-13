@@ -63,6 +63,7 @@ namespace PDS
         FileGetUploadUrlOutcome FileGetUploadUrl(const FileGetUploadUrlRequest& request) const;
         FileListUploadedPartsOutcome FileListUploadedParts(const FileListUploadedPartsRequest& request) const;
         FileCompleteOutcome FileComplete(const FileCompleteRequest& request) const;
+        FileGetDownloadUrlOutcome FileGetDownloadUrl(const FileGetDownloadUrlRequest& request) const;
         FileGetOutcome FileGet(const FileGetRequest& request) const;
         FileRenameOutcome FileRename(const FileRenameRequest& request) const;
         FileTrashOutcome FileTrash(const FileTrashRequest& request) const;

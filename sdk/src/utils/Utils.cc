@@ -18,6 +18,7 @@
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include <openssl/md5.h>
+#include <openssl/sha.h>
 #ifdef OPENSSL_IS_BORINGSSL
 #include <openssl/base64.h>
 #endif
@@ -316,6 +317,28 @@ std::string AlibabaCloud::PDS::ComputeContentMD5(std::istream& stream)
     return encodedData;
 }
 
+std::string AlibabaCloud::PDS::ComputeContentSha1(const std::string& data)
+{
+    return ComputeContentSha1(data.c_str(), data.size());
+}
+
+std::string AlibabaCloud::PDS::ComputeContentSha1(const char * data, size_t size)
+{
+    if (!data) {
+        return "";
+    }
+
+    unsigned char md[SHA_DIGEST_LENGTH];
+    SHA1(reinterpret_cast<const unsigned char*>(data), size, (unsigned char*)&md);
+
+    std::ostringstream sout;
+    sout<<std::hex<<std::setfill('0');
+    for(auto c: md)
+        sout<<std::setw(2)<<(int)c;
+
+    return sout.str();
+}
+
 std::string AlibabaCloud::PDS::ComputeContentSha1(std::istream& stream)
 {
     auto ctx = EVP_MD_CTX_create();
@@ -353,10 +376,72 @@ std::string AlibabaCloud::PDS::ComputeContentSha1(std::istream& stream)
     stream.clear();
     stream.seekg(currentPos, stream.beg);
 
-    //Based64
-    char encodedData[100];
-    EVP_EncodeBlock(reinterpret_cast<unsigned char*>(encodedData), md_value, md_len);
-    return encodedData;
+    std::ostringstream sout;
+    sout<<std::hex<<std::setfill('0');
+    for(unsigned int idx = 0; idx < md_len; idx++)
+        sout<<std::setw(2)<<(int)md_value[idx];
+
+    return sout.str();
+}
+
+std::string AlibabaCloud::PDS::ComputeContentSha1(std::istream& stream, ProgressControl progressControl)
+{
+    auto ctx = EVP_MD_CTX_create();
+
+    unsigned char md_value[EVP_MAX_MD_SIZE];
+    unsigned int md_len = 0;
+
+    EVP_MD_CTX_init(ctx);
+#ifndef OPENSSL_IS_BORINGSSL
+    EVP_MD_CTX_set_flags(ctx, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
+#endif
+    EVP_DigestInit_ex(ctx, EVP_sha1(), nullptr);
+
+    auto currentPos = stream.tellg();
+    if (currentPos == static_cast<std::streampos>(-1)) {
+        currentPos = 0;
+        stream.clear();
+    }
+    stream.seekg(0, stream.beg);
+
+    char streamBuffer[2048];
+    uint64_t count = 0;
+    while (stream.good())
+    {
+        count++;
+        // 10MB check once
+        if (count == 5120) {
+            if (progressControl.Handler) {
+                if (progressControl.Handler(progressControl.UserData) != 0) {
+                    EVP_MD_CTX_destroy(ctx);
+                    stream.clear();
+                    stream.seekg(currentPos, stream.beg);
+                    return "";
+                }
+            }
+            count = 0;
+        }
+
+        stream.read(streamBuffer, 2048);
+        auto bytesRead = stream.gcount();
+
+        if (bytesRead > 0)
+        {
+            EVP_DigestUpdate(ctx, streamBuffer, static_cast<size_t>(bytesRead));
+        }
+    }
+
+    EVP_DigestFinal_ex(ctx, md_value, &md_len);
+    EVP_MD_CTX_destroy(ctx);
+    stream.clear();
+    stream.seekg(currentPos, stream.beg);
+
+    std::ostringstream sout;
+    sout<<std::hex<<std::setfill('0');
+    for(unsigned int idx = 0; idx < md_len; idx++)
+        sout<<std::setw(2)<<(int)md_value[idx];
+
+    return sout.str();
 }
 
 static std::string HexToString(const unsigned char *data, size_t size)

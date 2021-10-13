@@ -31,11 +31,9 @@ namespace PDS
         ResumableBaseWorker(uint64_t fileSize, uint64_t partSize);
 
     protected:
-        virtual int validate(PdsError& err);
         virtual void determinePartSize();
         virtual void genRecordPath() = 0;
         virtual int loadRecord() = 0;
-        virtual int prepare(PdsError& err) = 0;
         virtual int validateRecord() = 0;
 
         virtual bool hasRecordPath();

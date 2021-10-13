@@ -18,6 +18,7 @@
 #include <alibabacloud/pds/Export.h>
 #include <alibabacloud/pds/PdsResult.h>
 #include <alibabacloud/pds/Types.h>
+#include <alibabacloud/pds/model/FileCreateResult.h>
 
 namespace AlibabaCloud
 {
@@ -27,6 +28,7 @@ namespace PDS
     {
     public:
         FileCompleteResult();
+        FileCompleteResult(const AlibabaCloud::PDS::FileCreateResult& createResult);
         FileCompleteResult(const std::shared_ptr<std::iostream>& content);
         const std::string& Category() const { return category_; }
         const std::string& ContentHash() const { return contentHash_; }
@@ -42,6 +44,7 @@ namespace PDS
         bool Hidden() const { return hidden_; }
         const std::string& Location() const { return location_; }
         const std::string& Name() const { return name_; }
+        bool RapidUpload() const { return rapidUpload_; }
         const std::string& ParentFileID() const { return parentFileID_; }
         int64_t Size() const { return size_; }
         bool Starred() const { return starred_; }
@@ -65,6 +68,7 @@ namespace PDS
         std::string location_;
         std::string name_;
         std::string parentFileID_;
+        bool rapidUpload_;
         int64_t size_;
         bool starred_;
         std::string status_;

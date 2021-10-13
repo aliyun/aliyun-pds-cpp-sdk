@@ -55,6 +55,13 @@ std::shared_ptr<std::iostream> FileCreateRequest::Body() const
     if (!fileID_.empty()) {
         root["file_id"] = fileID_;
     }
+    if (!preHash_.empty()) {
+        root["pre_hash"] = preHash_;
+    }
+    if (!contentHash_.empty()) {
+        root["content_hash_name"] = "sha1";
+        root["content_hash"] = contentHash_;
+    }
 
     int index = 0;
     for (const PartInfoReq& part : partInfoReqList_) {
@@ -88,6 +95,16 @@ void FileCreateRequest::setPartInfoList(const AlibabaCloud::PDS::PartInfoReqList
 void FileCreateRequest::setUserTags(const AlibabaCloud::PDS::UserTagList& userTags)
 {
     userTags_ = userTags;
+}
+
+void FileCreateRequest::setPreHash(const std::string& preHash)
+{
+    preHash_ = preHash;
+}
+
+void FileCreateRequest::setContentHash(const std::string& contentHash)
+{
+    contentHash_ = contentHash;
 }
 
 int FileCreateRequest::validate() const

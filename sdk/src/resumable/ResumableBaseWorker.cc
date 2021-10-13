@@ -35,32 +35,6 @@ ResumableBaseWorker::ResumableBaseWorker(uint64_t fileSize, uint64_t partSize) :
 {
 }
 
-int ResumableBaseWorker::validate(PdsError& err)
-{
-    genRecordPath();
-
-    if (hasRecordPath()) {
-        if (0 != loadRecord()) {
-            removeRecordFile();
-        }
-    }
-
-    if (hasRecord_) {
-        if (0 != validateRecord()) {
-            removeRecordFile();
-            if (0 != prepare(err)) {
-                return -1;
-            }
-        }
-    }
-    else {
-        if (0 != prepare(err)) {
-            return -1;
-        }
-    }
-    return 0;
-}
-
 void ResumableBaseWorker::determinePartSize()
 {
     uint64_t partSize = partSize_;

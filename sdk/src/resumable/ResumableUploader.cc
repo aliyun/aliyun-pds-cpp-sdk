@@ -64,11 +64,12 @@ ResumableUploader::ResumableUploader(const FileUploadRequest& request, const Pds
 
 FileCompleteOutcome ResumableUploader::Upload()
 {
-    PdsError err;
-
-    if (0 != validate(err)) {
-        return FileCompleteOutcome(err);
+    FileCompleteOutcome validateOutcome;
+    if (0 != validate(validateOutcome)) {
+        return validateOutcome;
     }
+
+    PdsError err;
 
     UploadPartRecordList partsToUpload;
     UploadPartRecordList uploadedParts;
@@ -115,7 +116,7 @@ FileCompleteOutcome ResumableUploader::Upload()
 
         auto partInfoResp = getUploadPartUrlOutcome.result().PartInfoRespList();
         if (partInfoResp.empty()) {
-            return FileCompleteOutcome(PdsError("Get Upload Url error", "Get Upload url empty."));
+            return FileCompleteOutcome(PdsError("GetUploadUrlError", "Get Upload url empty."));
         }
 
         DataPutByUrlRequest putPartRequest(partInfoResp[0].UploadUrl(), content);
@@ -261,22 +262,136 @@ FileCompleteOutcome ResumableUploader::Upload()
     return completeOutcome;
 }
 
-int ResumableUploader::prepare(PdsError& err)
+int ResumableUploader::validate(FileCompleteOutcome& completeOutcome)
 {
-    // TODO: rapidupload
+    genRecordPath();
 
+    if (hasRecordPath()) {
+        if (0 != loadRecord()) {
+            removeRecordFile();
+        }
+    }
+
+    if (hasRecord_) {
+        if (0 != validateRecord()) {
+            removeRecordFile();
+            if (0 != prepare(completeOutcome)) {
+                return -1;
+            }
+        }
+    }
+    else {
+        if (0 != prepare(completeOutcome)) {
+            return -1;
+        }
+    }
+    return 0;
+}
+
+int ResumableUploader::prepare(FileCompleteOutcome& completeOutcome)
+{
     determinePartSize();
-    FileCreateRequest fileCreateReq = FileCreateRequest(request_.DriveID(), request_.ParentFileID(), request_.Name(),
-        request_.FileID(), request_.CheckNameMode(), fileSize_);
-    fileCreateReq.setUserTags(request_.UserTags());
-    auto outcome = FileCreateWrap(fileCreateReq);
-    if(!outcome.isSuccess()){
-        err = outcome.error();
-        return -1;
+
+    FileCreateOutcome outcome;
+    // rapid upload
+    if (client_->configuration().enableRapidUpload) {
+        // caculate pre hash
+        uint64_t preHashBlockSize = 1024;
+        if (preHashBlockSize > request_.FileSize()) {
+            preHashBlockSize = request_.FileSize();
+        }
+
+        auto content = GetFstreamByPath(request_.FilePath(), request_.FilePathW(),
+        std::ios::in | std::ios::binary);
+        char streamBuffer[1024];
+        uint64_t readSize = 0;
+        if (!content->good()) {
+            completeOutcome = FileCompleteOutcome(PdsError("ReadFileError", "Failed to read input file"));
+            return -1;
+        }
+        content->read(streamBuffer, preHashBlockSize);
+        readSize = static_cast<uint64_t>(content->gcount());
+        content->close();
+
+        if (readSize != preHashBlockSize) {
+            completeOutcome = FileCompleteOutcome(PdsError("ReadFileError", "Failed to read enough size for caculate pre hash"));
+            return -1;
+        }
+        std::string preHashSHA1 = ComputeContentSha1(streamBuffer, preHashBlockSize);
+
+        // check pre hash request
+        auto fileCreatePreCheckReq = FileCreateRequest(request_.DriveID(), request_.ParentFileID(), request_.Name(),
+            request_.FileID(), request_.CheckNameMode(), request_.FileSize());
+        fileCreatePreCheckReq.setPreHash(preHashSHA1);
+        fileCreatePreCheckReq.setUserTags(request_.UserTags());
+        auto fileCreatePreCheckOutcome = FileCreateWrap(fileCreatePreCheckReq);
+
+        if (!fileCreatePreCheckOutcome.isSuccess()) {
+            // check pre hash error
+            if (fileCreatePreCheckOutcome.error().Code() != "PreHashMatched") {
+                completeOutcome = FileCompleteOutcome(fileCreatePreCheckOutcome.error());
+                return -1;
+            }
+
+            // check pre hash matched, rapid upload
+            auto content = GetFstreamByPath(request_.FilePath(), request_.FilePathW(),
+            std::ios::in | std::ios::binary);
+            std::string hashSHA1 = ComputeContentSha1(*content, request_.ProgressControl());
+            content->close();
+
+            // cancel/stop compute sha1 by upper
+            if (hashSHA1.empty()) {
+                int32_t controlFlag = UploadPartProcessControlCallback((void *)this);
+                if (controlFlag == ProgressControlStop) {
+                    completeOutcome = FileCompleteOutcome(PdsError("ClientError:100003", "Upload stop by upper."));
+                    return -1;
+                }
+                if (controlFlag == ProgressControlCancel) {
+                    completeOutcome =  FileCompleteOutcome(PdsError("ClientError:100004", "Upload cancel by upper."));
+                    return -1;
+                }
+            }
+
+            // rapid upload request
+            auto fileCreateRapidUploadReq = FileCreateRequest(request_.DriveID(), request_.ParentFileID(), request_.Name(),
+                request_.FileID(), request_.CheckNameMode(), request_.FileSize());
+            fileCreateRapidUploadReq.setContentHash(hashSHA1);
+            fileCreateRapidUploadReq.setUserTags(request_.UserTags());
+            auto fileCreateRapidUploadOutcome = FileCreateWrap(fileCreateRapidUploadReq);
+
+            if (!fileCreateRapidUploadOutcome.isSuccess()) {
+                completeOutcome = FileCompleteOutcome(fileCreateRapidUploadOutcome.error());
+                return -1;
+            }
+
+            // rapid upload success
+            if (fileCreateRapidUploadOutcome.result().RapidUpload()) {
+                FileCompleteResult result(fileCreateRapidUploadOutcome.result());
+                completeOutcome = FileCompleteOutcome(result);
+                return -1;
+            }
+
+            // failed to rapid upload, upload data
+            outcome = fileCreateRapidUploadOutcome.result();
+        } else {
+            // pre hash check not matched, upload data
+            outcome = fileCreatePreCheckOutcome.result();
+        }
+    } else {
+        // create by upload data
+        FileCreateRequest fileCreateReq = FileCreateRequest(request_.DriveID(), request_.ParentFileID(), request_.Name(),
+            request_.FileID(), request_.CheckNameMode(), fileSize_);
+        fileCreateReq.setUserTags(request_.UserTags());
+        auto fileCreateOutcome = FileCreateWrap(fileCreateReq);
+        if (!fileCreateOutcome.isSuccess()) {
+            completeOutcome = FileCompleteOutcome(fileCreateOutcome.error());
+            return -1;
+        }
+        outcome = fileCreateOutcome.result();
     }
 
     if (outcome.result().Exist()) {
-        err = PdsError("Same name file exist", "Same name file exist.");
+        completeOutcome = FileCompleteOutcome(PdsError("SameNameFileExist", "Same name file exist."));
         return -1;
     }
 

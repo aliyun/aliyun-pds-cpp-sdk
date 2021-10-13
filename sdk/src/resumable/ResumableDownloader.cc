@@ -42,14 +42,14 @@ DataGetOutcome ResumableDownloader::Download()
     }
 
     if (url_.empty()) {
-        FileGetRequest getRequest(record_.driveID, record_.shareID, record_.fileID);
-        getRequest.setShareToken(request_.ShareToken());
+        FileGetDownloadUrlRequest getDownloadUrlRequest(record_.driveID, record_.shareID, record_.fileID);
+        getDownloadUrlRequest.setShareToken(request_.ShareToken());
 
-        auto fileGetOutcome = FileGetWrap(getRequest);
-        if (!fileGetOutcome.isSuccess()) {
-            return DataGetOutcome(fileGetOutcome.error());
+        auto getDownloadUrlOutcome = FileGetDownloadUrlWrap(getDownloadUrlRequest);
+        if (!getDownloadUrlOutcome.isSuccess()) {
+            return DataGetOutcome(getDownloadUrlOutcome.error());
         }
-        url_ = fileGetOutcome.result().Url();
+        url_ = getDownloadUrlOutcome.result().Url();
     }
 
     //task queue
@@ -91,7 +91,9 @@ DataGetOutcome ResumableDownloader::Download()
                     return tmpFstream;
                 });
                 getDataReq.setRange(start, end);
-                getDataReq.setFlags(getDataReq.Flags() | REQUEST_FLAG_CHECK_CRC64 | REQUEST_FLAG_SAVE_CLIENT_CRC64);
+                if (!crc64Hash_.empty()) {
+                    getDataReq.setFlags(getDataReq.Flags() | REQUEST_FLAG_CHECK_CRC64 | REQUEST_FLAG_SAVE_CLIENT_CRC64);
+                }
 
                 auto process = request_.TransferProgress();
                 if (process.Handler) {
@@ -113,21 +115,22 @@ DataGetOutcome ResumableDownloader::Download()
                 {
                     std::lock_guard<std::mutex> lck(lock_);
                     if (!outcome.isSuccess() && outcome.error().Code() == "AccessDenied" && outcome.error().Message().find("expired")) {
-                        FileGetRequest getRequest(record_.driveID, record_.shareID ,record_.fileID);
-                        getRequest.setShareToken(request_.ShareToken());
+                        FileGetDownloadUrlRequest getDownloadUrlRequest(record_.driveID, record_.shareID ,record_.fileID);
+                        getDownloadUrlRequest.setShareToken(request_.ShareToken());
 
-                        auto fileGetOutcome = FileGetWrap(getRequest);
-                        if (!fileGetOutcome.isSuccess()) {
-                            outcomes.push_back(fileGetOutcome.error());
+                        auto getDownloadUrlOutcome = FileGetDownloadUrlWrap(getDownloadUrlRequest);
+                        if (!getDownloadUrlOutcome.isSuccess()) {
+                            outcomes.push_back(getDownloadUrlOutcome.error());
                             break;
                         }
                         // check file content-hash
-                        auto contentHash = fileGetOutcome.result().ContentHash();
-                        if (contentHash != contentHash_ ) {
+                        auto contentHash = getDownloadUrlOutcome.result().ContentHash();
+                        auto fileSize = getDownloadUrlOutcome.result().Size();
+                        if (contentHash != contentHash_ || fileSize != (int64_t)fileSize_) {
                             outcomes.push_back(PdsError("SourceFileModified","Source file has been modified since last download."));
                             break;
                         }
-                        url_ = fileGetOutcome.result().Url();
+                        url_ = getDownloadUrlOutcome.result().Url();
                         needRetry = true;
                     }
                 }
@@ -153,7 +156,9 @@ DataGetOutcome ResumableDownloader::Download()
                 {
                     std::lock_guard<std::mutex> lck(lock_);
                     if (outcome.isSuccess()) {
-                        part.crc64 = std::strtoull(outcome.result().Metadata().HttpMetaData().at("x-oss-hash-crc64ecma-by-client").c_str(), nullptr, 10);
+                        if (!crc64Hash_.empty()) {
+                            part.crc64 = std::strtoull(outcome.result().Metadata().HttpMetaData().at("x-oss-hash-crc64ecma-by-client").c_str(), nullptr, 10);
+                        }
                         downloadedParts.push_back(part);
                     }
                     outcomes.push_back(outcome);
@@ -241,7 +246,7 @@ DataGetOutcome ResumableDownloader::Download()
         return DataGetOutcome(PdsError("FileSizeCheckError", "Resumable Download data check size fail."));
     }
 
-    //check crc64
+    // check crc64
     if (client_->configuration().enableCrc64 && !crc64Hash_.empty()) {
         uint64_t localCRC64 = downloadedParts[0].crc64;
         for (size_t i = 1; i < downloadedParts.size(); i++) {
@@ -265,13 +270,39 @@ DataGetOutcome ResumableDownloader::Download()
     return DataGetOutcome(result);
 }
 
+int ResumableDownloader::validate(PdsError& err)
+{
+    genRecordPath();
+
+    if (hasRecordPath()) {
+        if (0 != loadRecord()) {
+            removeRecordFile();
+        }
+    }
+
+    if (hasRecord_) {
+        if (0 != validateRecord()) {
+            removeRecordFile();
+            if (0 != prepare(err)) {
+                return -1;
+            }
+        }
+    }
+    else {
+        if (0 != prepare(err)) {
+            return -1;
+        }
+    }
+    return 0;
+}
+
 int ResumableDownloader::prepare(PdsError& err)
 {
     UNUSED_PARAM(err);
 
     determinePartSize();
     if (hasRecordPath()) {
-        initRecord();
+        initRecordInfo();
 
         Json::Value root;
         root["opType"] = record_.opType;
@@ -438,7 +469,7 @@ int ResumableDownloader::getPartsToDownload(PdsError &err, PartRecordList &parts
     return 0;
 }
 
-void ResumableDownloader::initRecord()
+void ResumableDownloader::initRecordInfo()
 {
     auto filePath = request_.FilePath();
     if (!request_.FilePathW().empty()) {
@@ -509,9 +540,9 @@ void ResumableDownloader::removeTempFile()
     }
 }
 
-FileGetOutcome ResumableDownloader::FileGetWrap(const FileGetRequest &request) const
+FileGetDownloadUrlOutcome ResumableDownloader::FileGetDownloadUrlWrap(const FileGetDownloadUrlRequest &request) const
 {
-    return client_->FileGet(request);
+    return client_->FileGetDownloadUrl(request);
 }
 
 DataGetOutcome ResumableDownloader::DataGetByUrlWrap(const DataGetByUrlRequest &request) const

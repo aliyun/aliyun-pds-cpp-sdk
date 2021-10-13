@@ -62,19 +62,21 @@ namespace PDS
         DataGetOutcome Download();
 
     protected:
+        virtual FileGetDownloadUrlOutcome FileGetDownloadUrlWrap(const FileGetDownloadUrlRequest &request) const;
+        virtual DataGetOutcome DataGetByUrlWrap(const DataGetByUrlRequest &request) const;
+        int validateRecord();
+        void initRecordInfo();
+
+    private:
+        int validate(PdsError& err);
+        int prepare(PdsError& err);
+        int getPartsToDownload(PdsError &err, PartRecordList &partsToDownload);
         void genRecordPath();
         int loadRecord();
-        int validateRecord();
-        int prepare(PdsError& err);
-        void initRecord();
-        int getPartsToDownload(PdsError &err, PartRecordList &partsToDownload);
         bool renameTempFile();
         void removeTempFile();
         static void DownloadPartProcessCallback(size_t increment, int64_t transfered, int64_t total, void *userData);
         static int32_t DownloadPartProcessControlCallback(void *userData);
-
-        virtual FileGetOutcome FileGetWrap(const FileGetRequest &request) const;
-        virtual DataGetOutcome DataGetByUrlWrap(const DataGetByUrlRequest &request) const;
 
         const FileDownloadRequest request_;
         DownloadRecord record_;

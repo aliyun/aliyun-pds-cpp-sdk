@@ -18,7 +18,6 @@
 #include <alibabacloud/pds/Export.h>
 #include <alibabacloud/pds/PdsResult.h>
 #include <alibabacloud/pds/Types.h>
-#include <alibabacloud/pds/model/FileItem.h>
 
 namespace AlibabaCloud
 {

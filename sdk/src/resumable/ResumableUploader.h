@@ -57,15 +57,15 @@ namespace PDS
         virtual DataPutOutcome UploadPartWrap(const DataPutByUrlRequest &request) const;
         virtual FileListUploadedPartsOutcome ListUploadedPartsWrap(const FileListUploadedPartsRequest &request) const;
         virtual FileCompleteOutcome FileCompleteWrap(const FileCompleteRequest &request) const;
-
-        virtual void initRecordInfo();
-        virtual int validateRecord();
+        int validateRecord();
+        void initRecordInfo();
 
     private:
+        int validate(FileCompleteOutcome& outcome);
+        int prepare(FileCompleteOutcome& outcome);
         int getPartsToUpload(PdsError &err, UploadPartRecordList &partsUploaded, UploadPartRecordList &partsToUpload);
-        virtual void genRecordPath();
-        virtual int loadRecord();
-        virtual int prepare(PdsError& err);
+        void genRecordPath();
+        int loadRecord();
         static void UploadPartProcessCallback(size_t increment, int64_t transfered, int64_t total, void *userData);
         static int32_t UploadPartProcessControlCallback(void *userData);
 

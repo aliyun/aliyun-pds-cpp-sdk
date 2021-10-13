@@ -31,7 +31,10 @@ namespace PDS
     std::string ComputeContentMD5(const char *data, size_t size);
     std::string ComputeContentMD5(std::istream & stream);
 
+    std::string ComputeContentSha1(const std::string& data);
+    std::string ComputeContentSha1(const char *data, size_t size);
     std::string ComputeContentSha1(std::istream & stream);
+    std::string ComputeContentSha1(std::istream & stream, ProgressControl progressControl);
 
     std::string ComputeContentETag(const std::string& data);
     std::string ComputeContentETag(const char *data, size_t size);

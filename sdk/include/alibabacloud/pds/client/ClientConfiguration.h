@@ -98,6 +98,10 @@ namespace PDS
         */
         bool enableCrc64;
         /**
+        * enable or disable rapid upload.
+        */
+        bool enableRapidUpload;
+        /**
         * Rate limit data upload speed.
         */
         std::shared_ptr<RateLimiter> sendRateLimiter;

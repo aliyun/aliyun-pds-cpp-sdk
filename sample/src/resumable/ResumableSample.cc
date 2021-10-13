@@ -15,8 +15,12 @@ using namespace AlibabaCloud::PDS;
 ResumableSample::ResumableSample()
 {
     ClientConfiguration conf;
-    std::shared_ptr<MyCredentialsProvider> cProvider = std::make_shared<MyCredentialsProvider>(Config::AccessToken);
+    // enable rapid upload, rapid upload is disabled by default.
+    conf.enableRapidUpload = true;
+    std::shared_ptr<MyCredentialsProvider> cProvider = std::make_shared<MyCredentialsProvider>("");
     client = new PdsClient(Config::Endpoint, cProvider, conf);
+    // update access tokensu
+    cProvider->setAccessToken(Config::AccessToken);
 }
 
 ResumableSample::~ResumableSample() {
@@ -51,7 +55,8 @@ std::string ResumableSample::ResumableFileUpload()
     }
 
     fileID = uploadOutcome.result().FileID();
-    std::cout << __FUNCTION__ << " call ResumableFileUpload success, file id: " << fileID << std::endl;
+    std::string isRapidUpload = uploadOutcome.result().RapidUpload() ? "is rapid upload" : "is not rapid upload";
+    std::cout << __FUNCTION__ << " call ResumableFileUpload success, file id: " << fileID << ", " << isRapidUpload << std::endl;
 
     return fileID;
 }
@@ -72,7 +77,8 @@ std::string ResumableSample::ResumableFileUploadStopOnce()
         PrintError(__FUNCTION__, uploadOutcome.error());
     } else {
         fileID = uploadOutcome.result().FileID();
-        std::cout << __FUNCTION__ << " first time call ResumableFileUpload success, file id: " << fileID << std::endl;
+        std::string isRapidUpload = uploadOutcome.result().RapidUpload() ? "is rapid upload" : "is not rapid upload";
+        std::cout << __FUNCTION__ << " first time call ResumableFileUpload success, file id: " << fileID << ", " << isRapidUpload << std::endl;
         return fileID;
     }
 
@@ -84,7 +90,8 @@ std::string ResumableSample::ResumableFileUploadStopOnce()
         return fileID;
     } else {
         fileID = uploadOutcome.result().FileID();
-        std::cout << __FUNCTION__ << " second time call ResumableFileUpload success, file id: " << fileID << std::endl;
+        std::string isRapidUpload = uploadOutcome.result().RapidUpload() ? "is rapid upload" : "is not rapid upload";
+        std::cout << __FUNCTION__ << " second time call ResumableFileUpload success, file id: " << fileID << ", " << isRapidUpload << std::endl;
     }
 
     return fileID;
@@ -107,7 +114,8 @@ std::string ResumableSample::ResumableFileUploadCancel()
         return fileID;
     } else {
         fileID = uploadOutcome.result().FileID();
-        std::cout << __FUNCTION__ << " call ResumableFileUpload success, file id: " << fileID << std::endl;
+        std::string isRapidUpload = uploadOutcome.result().RapidUpload() ? "is rapid upload" : "is not rapid upload";
+        std::cout << __FUNCTION__ << " call ResumableFileUpload success, file id: " << fileID << ", " << isRapidUpload << std::endl;
     }
     return fileID;
 }
