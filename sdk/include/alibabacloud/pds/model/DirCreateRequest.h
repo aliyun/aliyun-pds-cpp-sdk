@@ -18,11 +18,13 @@
 #include <alibabacloud/pds/Export.h>
 #include <alibabacloud/pds/PdsRequest.h>
 #include <alibabacloud/pds/Types.h>
+#include <alibabacloud/pds/model/MetaUserTag.h>
 
 namespace AlibabaCloud
 {
 namespace PDS
 {
+    using UserTagList = std::vector<UserTag>;
     class ALIBABACLOUD_PDS_EXPORT DirCreateRequest: public PdsRequest
     {
     public:
@@ -30,6 +32,8 @@ namespace PDS
                          const std::string& checkNameMode);
         std::string Path() const;
         virtual std::shared_ptr<std::iostream> Body() const;
+
+        void setUserTags(const AlibabaCloud::PDS::UserTagList& userTags);
     protected:
         int validate() const;
     private:
@@ -39,6 +43,7 @@ namespace PDS
         std::string checkNameMode_;
         std::string path_;
         std::string type_;
+        AlibabaCloud::PDS::UserTagList userTags_;
     };
 }
 }

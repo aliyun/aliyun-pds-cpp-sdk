@@ -44,4 +44,5 @@ DirCreateResult::DirCreateResult(
     fileName_ = root["file_name"].asString();
     parentFileID_ = root["parent_file_id"].asString();
     type_ = root["type"].asString();
+    exist_ = root["exist"].asBool();
 }

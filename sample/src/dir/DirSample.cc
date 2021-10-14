@@ -34,6 +34,13 @@ void DirSample::PrintError(const std::string &funcName, const PdsError &error)
 std::string DirSample::DirCreate()
 {
     DirCreateRequest request(Config::DriveID, Config::RootParentID, "test_dir", "auto_rename");
+
+    // set user tags when create
+    UserTagList userTagList;
+    UserTag userTag("key", "value");
+    userTagList.push_back(userTag);
+    request.setUserTags(userTagList);
+
     auto outcome = client->DirCreate(request);
     if (!outcome.isSuccess()) {
         PrintError(__FUNCTION__, outcome.error());

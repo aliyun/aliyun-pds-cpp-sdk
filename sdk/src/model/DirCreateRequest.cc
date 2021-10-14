@@ -48,12 +48,24 @@ std::shared_ptr<std::iostream> DirCreateRequest::Body() const
     root["check_name_mode"] = checkNameMode_;
     root["type"] = type_;
 
+    int index = 0;
+    for (const UserTag& userTag : userTags_) {
+        root["user_tags"][index]["key"] = userTag.Key();
+        root["user_tags"][index]["value"] = userTag.Value();
+        index++;
+    }
+
     Json::StreamWriterBuilder builder;
     builder.settings_["indentation"] = "";
     std::shared_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
     auto content = std::make_shared<std::stringstream>();
     writer->write(root, content.get());
     return content;
+}
+
+void DirCreateRequest::setUserTags(const AlibabaCloud::PDS::UserTagList& userTags)
+{
+    userTags_ = userTags;
 }
 
 int DirCreateRequest::validate() const

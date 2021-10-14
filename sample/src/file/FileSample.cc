@@ -45,7 +45,7 @@ std::string FileSample::FileCreate()
 
     // set user tags when create
     UserTagList userTagList;
-    UserTag userTag("key", "");
+    UserTag userTag("key", "value");
     userTagList.push_back(userTag);
     createRequest.setUserTags(userTagList);
 

@@ -34,6 +34,7 @@ namespace PDS
         const std::string& FileName() const { return fileName_; }
         const std::string& ParentFileID() const { return parentFileID_; }
         const std::string& Type() const { return type_; }
+        bool Exist() const { return exist_; }
     private:
         std::string domainID_;
         std::string driveID_;
@@ -41,6 +42,7 @@ namespace PDS
         std::string fileName_;
         std::string parentFileID_;
         std::string type_;
+        bool exist_;
     };
 }
 }
