@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2017 Alibaba Cloud All rights reserved.
+ * Copyright 2009-2021 Alibaba Cloud All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ namespace PDS
     {
     public:
         FileGetRequest(const std::string& driveID, const std::string& shareID, const std::string& fileID);
-        std::string Path() const;
         virtual std::shared_ptr<std::iostream> Body() const;
 
         void setUrlExpireSec(int64_t urlExpireSec);
@@ -41,7 +40,6 @@ namespace PDS
         std::string fileID_;
         int64_t urlExpireSec_;
         std::string shareToken_;
-        std::string path_;
     };
 }
 }

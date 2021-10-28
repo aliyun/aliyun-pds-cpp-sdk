@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2017 Alibaba Cloud All rights reserved.
+ * Copyright 2009-2021 Alibaba Cloud All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,14 +28,12 @@ namespace PDS
     public:
         MetaUserTagsDeleteRequest(const std::string& driveID, const std::string& fileID,
             const std::vector<std::string>& keyList);
-        std::string Path() const;
         virtual std::shared_ptr<std::iostream> Body() const;
     protected:
         int validate() const;
     private:
         std::string driveID_;
         std::string fileID_;
-        std::string path_;
         std::vector<std::string> keyList_;
     };
 }

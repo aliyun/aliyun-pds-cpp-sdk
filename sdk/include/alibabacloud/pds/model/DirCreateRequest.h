@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2017 Alibaba Cloud All rights reserved.
+ * Copyright 2009-2021 Alibaba Cloud All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ namespace PDS
     public:
         DirCreateRequest(const std::string& driveID, const std::string& parentFileID, const std::string& name,
                          const std::string& checkNameMode);
-        std::string Path() const;
         virtual std::shared_ptr<std::iostream> Body() const;
 
         void setUserTags(const AlibabaCloud::PDS::UserTagList& userTags);
@@ -41,7 +40,6 @@ namespace PDS
         std::string parentFileID_;
         std::string name_;
         std::string checkNameMode_;
-        std::string path_;
         std::string type_;
         AlibabaCloud::PDS::UserTagList userTags_;
     };

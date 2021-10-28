@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2017 Alibaba Cloud All rights reserved.
+ * Copyright 2009-2021 Alibaba Cloud All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ namespace PDS
         DataPutResult();
         DataPutResult(const HeaderCollection& header);
         DataPutResult(const HeaderCollection& header, const std::shared_ptr<std::iostream>& content);
-        DataPutResult(const std::string eTag, const uint64_t crc64) :eTag_(eTag), crc64_(crc64) {}
+        DataPutResult(const std::string& eTag, const uint64_t crc64) :eTag_(eTag), crc64_(crc64) {}
         const std::string& ETag() const;
         uint64_t CRC64();
         const std::shared_ptr<std::iostream>& Content() const;

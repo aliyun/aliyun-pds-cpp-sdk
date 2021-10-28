@@ -1,5 +1,5 @@
 #
-# Copyright 2009-2017 Alibaba Cloud All rights reserved.
+# Copyright 2009-2021 Alibaba Cloud All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ file(GLOB sdk_client_header "include/alibabacloud/pds/client/*.h")
 file(GLOB sdk_http_header "include/alibabacloud/pds/http/*.h")
 file(GLOB sdk_utils_header "include/alibabacloud/pds/utils/*.h")
 file(GLOB sdk_model_header "include/alibabacloud/pds/model/*.h")
+file(GLOB sdk_json_header "include/alibabacloud/pds/external/json/*.h")
 file(GLOB sdk_public_header "include/alibabacloud/pds/*.h")
 
 #all header
@@ -166,6 +167,8 @@ install(FILES ${sdk_utils_header}
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/alibabacloud/pds/utils)
 install(FILES ${sdk_model_header}
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/alibabacloud/pds/model)
+install(FILES ${sdk_json_header}
+    DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/alibabacloud/pds/external/json)
 install(FILES ${sdk_public_header}
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/alibabacloud/pds)
 

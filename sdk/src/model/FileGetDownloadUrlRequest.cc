@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2017 Alibaba Cloud All rights reserved.
+ * Copyright 2009-2021 Alibaba Cloud All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,11 +31,6 @@ FileGetDownloadUrlRequest::FileGetDownloadUrlRequest(const std::string& driveID,
         urlExpireSec_(0)
 {
     setPath("/v2/file/get_download_url");
-}
-
-std::string FileGetDownloadUrlRequest::Path() const
-{
-    return path_;
 }
 
 std::shared_ptr<std::iostream> FileGetDownloadUrlRequest::Body() const

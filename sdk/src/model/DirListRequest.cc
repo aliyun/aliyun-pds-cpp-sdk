@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2017 Alibaba Cloud All rights reserved.
+ * Copyright 2009-2021 Alibaba Cloud All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,11 +40,6 @@ DirListRequest::DirListRequest(const std::string& driveID, const std::string& pa
         all_(nullptr)
 {
     setPath("/v2/file/list");
-}
-
-std::string DirListRequest::Path() const
-{
-    return path_;
 }
 
 std::shared_ptr<std::iostream> DirListRequest::Body() const
@@ -104,14 +99,14 @@ void DirListRequest::setUrlExpireSec(int64_t urlExpireSec)
 void DirListRequest::setStarred(bool* starred)
 {
     if (nullptr != starred) {
-        *starred_ = *starred;
+        starred_ = starred;
     }
 }
 
 void DirListRequest::setAll(bool* all)
 {
     if (nullptr != all) {
-        *all_ = *all;
+        all_ = all;
     }
 }
 

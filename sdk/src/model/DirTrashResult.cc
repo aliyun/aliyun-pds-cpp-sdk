@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2017 Alibaba Cloud All rights reserved.
+ * Copyright 2009-2021 Alibaba Cloud All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,6 @@ DirTrashResult::DirTrashResult(
         return;
     }
 
-    domainID_ = root["domain_id"].asString();
     driveID_ = root["drive_id"].asString();
     fileID_ = root["file_id"].asString();
     asyncTaskID_ = root["async_task_id"].asString();

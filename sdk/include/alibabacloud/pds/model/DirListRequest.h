@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2017 Alibaba Cloud All rights reserved.
+ * Copyright 2009-2021 Alibaba Cloud All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ namespace PDS
         DirListRequest(const std::string& driveID, const std::string& parentFileID,
             const std::string& orderBy, const std::string& orderDirection,
             const std::string& fields, const std::string& marker, int64_t limit);
-        std::string Path() const;
         virtual std::shared_ptr<std::iostream> Body() const;
 
         void setType(const std::string& type);
@@ -54,8 +53,6 @@ namespace PDS
         int64_t urlExpireSec_;
         bool* starred_;
         bool* all_;
-
-        std::string path_;
     };
 }
 }

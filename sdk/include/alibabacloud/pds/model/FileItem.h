@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2017 Alibaba Cloud All rights reserved.
+ * Copyright 2009-2021 Alibaba Cloud All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,6 @@ namespace PDS
         const std::string& Crc64Hash() const { return crc64Hash_; }
         const std::string& CreatedAt() const { return createdAt_; }
         const std::string& Description() const { return description_; }
-        const std::string& DomainID() const { return domainID_; }
         const std::string& DownloadUrl() const { return downloadUrl_; }
         const std::string& DriveID() const { return driveID_; }
         const std::string& EncryptMode() const { return encryptMode_; }
@@ -64,7 +63,6 @@ namespace PDS
         std::string crc64Hash_;
         std::string createdAt_;
         std::string description_;
-        std::string domainID_;
         std::string downloadUrl_;
         std::string driveID_;
         std::string encryptMode_;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2017 Alibaba Cloud All rights reserved.
+ * Copyright 2009-2021 Alibaba Cloud All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ static const char * GetArgErrorMsg(const int code)
         "Open temp file for download failed",
         /*Resumable for wstring path -18*/
         "Only support wstring path in windows os.",
-        "The type of filePath and checkpointDir should be the same, either string or wstring."
+        "The type of filePath and checkpointDir should be the same, either string or wstring.",
         /*Get Data -20*/
         "The range is invalid. The start should not be less than 0 or less then the end. The end could be -1 to get the rest of the data.",
     };

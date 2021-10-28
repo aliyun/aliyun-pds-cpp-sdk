@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2017 Alibaba Cloud All rights reserved.
+ * Copyright 2009-2021 Alibaba Cloud All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,11 +30,6 @@ MetaUserTagsPutRequest::MetaUserTagsPutRequest(const std::string& driveID, const
         userTags_(userTags)
 {
     setPath("/v2/file/put_usertags");
-}
-
-std::string MetaUserTagsPutRequest::Path() const
-{
-    return path_;
 }
 
 std::shared_ptr<std::iostream> MetaUserTagsPutRequest::Body() const

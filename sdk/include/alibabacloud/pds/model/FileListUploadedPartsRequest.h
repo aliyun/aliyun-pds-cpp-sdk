@@ -28,7 +28,6 @@ namespace PDS
     public:
         FileListUploadedPartsRequest(const std::string& driveID, const std::string& fileID, const std::string& uploadID,
             int64_t marker, int64_t limit);
-        std::string Path() const;
         void setMarker(int64_t marker);
         virtual std::shared_ptr<std::iostream> Body() const;
     protected:
@@ -39,7 +38,6 @@ namespace PDS
         std::string uploadID_;
         int64_t marker_;
         int64_t limit_;
-        std::string path_;
     };
 }
 }

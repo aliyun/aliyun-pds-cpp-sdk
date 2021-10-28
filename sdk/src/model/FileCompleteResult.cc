@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2017 Alibaba Cloud All rights reserved.
+ * Copyright 2009-2021 Alibaba Cloud All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ FileCompleteResult::FileCompleteResult():
 FileCompleteResult::FileCompleteResult(const AlibabaCloud::PDS::FileCreateResult& createResult):
         PdsResult()
 {
-    domainID_ = createResult.DomainID();
     driveID_ = createResult.DriveID();
     encryptMode_ = createResult.EncryptMode();
     fileID_ = createResult.FileID();
@@ -59,7 +58,6 @@ FileCompleteResult::FileCompleteResult(
     contentType_ = root["content_type"].asString();
     crc64Hash_ = root["crc64_hash"].asString();
     createdAt_ = root["created_at"].asString();
-    domainID_ = root["domain_id"].asString();
     driveID_ = root["drive_id"].asString();
     encryptMode_ = root["encrypt_mode"].asString();
     fileExtension_ = root["file_extension"].asString();

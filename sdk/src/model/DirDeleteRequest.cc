@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2017 Alibaba Cloud All rights reserved.
+ * Copyright 2009-2021 Alibaba Cloud All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,11 +28,6 @@ DirDeleteRequest::DirDeleteRequest(const std::string& driveID, const std::string
         fileID_(fileID)
 {
     setPath("/v2/file/delete");
-}
-
-std::string DirDeleteRequest::Path() const
-{
-    return path_;
 }
 
 std::shared_ptr<std::iostream> DirDeleteRequest::Body() const

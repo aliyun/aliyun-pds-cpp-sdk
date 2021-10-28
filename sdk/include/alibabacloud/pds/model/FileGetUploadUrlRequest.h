@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2017 Alibaba Cloud All rights reserved.
+ * Copyright 2009-2021 Alibaba Cloud All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ namespace PDS
     public:
         FileGetUploadUrlRequest(const std::string& driveID, const std::string& fileID, const std::string& uploadID,
             const AlibabaCloud::PDS::PartInfoReqList& partInfoReqList);
-        std::string Path() const;
         virtual std::shared_ptr<std::iostream> Body() const;
         void setTrafficLimit(uint64_t value);
         void setUserAgent(const std::string& ua);
@@ -42,7 +41,6 @@ namespace PDS
         std::string fileID_;
         std::string uploadID_;
         AlibabaCloud::PDS::PartInfoReqList partInfoReqList_;
-        std::string path_;
         uint64_t trafficLimit_;
         std::string userAgent_;
     };

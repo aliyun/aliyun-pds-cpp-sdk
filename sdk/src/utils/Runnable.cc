@@ -1,5 +1,5 @@
 /*
-* Copyright 2009-2017 Alibaba Cloud All rights reserved.
+* Copyright 2009-2021 Alibaba Cloud All rights reserved.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -25,5 +25,5 @@ Runnable::Runnable(const std::function<void()> f) :
 
 void Runnable::run() const
 {
-    f_(); 
+    f_();
 }

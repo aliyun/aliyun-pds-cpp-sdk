@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2017 Alibaba Cloud All rights reserved.
+ * Copyright 2009-2021 Alibaba Cloud All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,11 +36,6 @@ FileCreateRequest::FileCreateRequest(const std::string& driveID, const std::stri
         type_("file")
 {
     setPath("/v2/file/create");
-}
-
-std::string FileCreateRequest::Path() const
-{
-    return path_;
 }
 
 std::shared_ptr<std::iostream> FileCreateRequest::Body() const

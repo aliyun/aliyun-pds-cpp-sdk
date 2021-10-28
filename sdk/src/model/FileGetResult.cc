@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2017 Alibaba Cloud All rights reserved.
+ * Copyright 2009-2021 Alibaba Cloud All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,6 @@ FileGetResult::FileGetResult(
     crc64Hash_ = root["crc64_hash"].asString();
     createdAt_ = root["created_at"].asString();
     description_ = root["description"].asString();
-    domainID_ = root["domain_id"].asString();
     downloadUrl_ = root["download_url"].asString();
     driveID_ = root["drive_id"].asString();
     encryptMode_ = root["encrypt_mode"].asString();

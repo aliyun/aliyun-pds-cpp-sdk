@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2017 Alibaba Cloud All rights reserved.
+ * Copyright 2009-2021 Alibaba Cloud All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,9 +31,9 @@ namespace PDS
     public:
         FileListUploadedPartsResult();
         FileListUploadedPartsResult(const std::shared_ptr<std::iostream>& content);
-        const std::string FileID() const { return fileID_; }
-        const std::string UploadID() const { return uploadID_; }
-        const std::string NextMarker() const { return nextMarker_; }
+        const std::string& FileID() const { return fileID_; }
+        const std::string& UploadID() const { return uploadID_; }
+        const std::string& NextMarker() const { return nextMarker_; }
         const AlibabaCloud::PDS::PartList& PartList() const { return partList_; }
     private:
         std::string fileID_;

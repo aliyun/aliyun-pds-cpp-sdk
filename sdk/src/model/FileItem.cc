@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2017 Alibaba Cloud All rights reserved.
+ * Copyright 2009-2021 Alibaba Cloud All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,6 @@ void FileItem::ParseFromJson(const Json::Value& jValue)
     crc64Hash_ = jValue["crc64_hash"].asString();
     createdAt_ = jValue["created_at"].asString();
     description_ = jValue["description"].asString();
-    domainID_ = jValue["domain_id"].asString();
     downloadUrl_ = jValue["download_url"].asString();
     driveID_ = jValue["drive_id"].asString();
     encryptMode_ = jValue["encrypt_mode"].asString();

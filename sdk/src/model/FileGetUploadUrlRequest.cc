@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2017 Alibaba Cloud All rights reserved.
+ * Copyright 2009-2021 Alibaba Cloud All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,11 +33,6 @@ FileGetUploadUrlRequest::FileGetUploadUrlRequest(const std::string& driveID, con
         partInfoReqList_(partInfoReqList)
 {
     setPath("/v2/file/get_upload_url");
-}
-
-std::string FileGetUploadUrlRequest::Path() const
-{
-    return path_;
 }
 
 std::shared_ptr<std::iostream> FileGetUploadUrlRequest::Body() const

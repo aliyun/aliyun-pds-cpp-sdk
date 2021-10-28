@@ -1,5 +1,5 @@
 /*
- * Copyright 2009-2017 Alibaba Cloud All rights reserved.
+ * Copyright 2009-2021 Alibaba Cloud All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ namespace PDS
     public:
         FileCreateResult();
         FileCreateResult(const std::shared_ptr<std::iostream>& content);
-        const std::string& DomainID() const { return domainID_; }
         const std::string& DriveID() const { return driveID_; }
         const std::string& EncryptMode() const { return encryptMode_; }
         const std::string& FileID() const { return fileID_; }
@@ -43,7 +42,6 @@ namespace PDS
         bool Exist() const { return exist_; }
         const AlibabaCloud::PDS::PartInfoRespList& PartInfoRespList() const { return partInfoRespList_; }
     private:
-        std::string domainID_;
         std::string driveID_;
         std::string encryptMode_;
         std::string fileID_;
