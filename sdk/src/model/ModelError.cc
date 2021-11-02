@@ -49,6 +49,8 @@ static const char * GetArgErrorMsg(const int code)
         "The type of filePath and checkpointDir should be the same, either string or wstring.",
         /*Get Data -20*/
         "The range is invalid. The start should not be less than 0 or less then the end. The end could be -1 to get the rest of the data.",
+        /*PDS API -21*/
+        "The check name mode parameter is invalid. It should not be auto_name for uploading when task id is empty.",
     };
 
     int index = code - ARG_ERROR_START;

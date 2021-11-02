@@ -61,9 +61,11 @@ namespace PDS
         const std::string& FileID() const { return fileID_; }
         const std::string& CheckNameMode() const { return checkNameMode_; }
         const AlibabaCloud::PDS::UserTagList& UserTags() const { return userTags_; }
+        const std::string& TaskID() const { return taskID_; }
 
-        // TODO: to be implemented
         void setUserTags(const AlibabaCloud::PDS::UserTagList& userTags);
+        // unique task id for resumable upload
+        void setTaskID(const std::string& taskID);
 
     protected:
         virtual int validate() const;
@@ -78,6 +80,7 @@ namespace PDS
         std::wstring filePathW_;
         bool isFileExist_;
         AlibabaCloud::PDS::UserTagList userTags_;
+        std::string taskID_;
     };
 }
 }

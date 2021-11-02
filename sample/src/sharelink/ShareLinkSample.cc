@@ -62,7 +62,7 @@ void ShareLinkSample::FileDownload(const std::string& fileID)
 
 void ShareLinkSample::ResumableFileDownload(const std::string& fileID)
 {
-    FileDownloadRequest downloadRequest("", Config::ShareID,  fileID, Config::FileDownloadTo, "checkpoint_dir");
+    FileDownloadRequest downloadRequest("", Config::ShareID,  fileID, Config::FileDownloadTo, Config::CheckpointDir);
     downloadRequest.setShareToken(Config::ShareToken);
 
     TransferProgress progressCallback = { ProgressCallback , this };
@@ -79,7 +79,7 @@ void ShareLinkSample::ResumableFileDownloadStopOnce(const std::string& fileID)
 {
     ResetProgressControlCallTimes();
 
-    FileDownloadRequest downloadRequest("", Config::ShareID, fileID, Config::FileDownloadTo, "checkpoint_dir");
+    FileDownloadRequest downloadRequest("", Config::ShareID, fileID, Config::FileDownloadTo, Config::CheckpointDir);
     downloadRequest.setShareToken(Config::ShareToken);
 
     TransferProgress progressCallback = { ProgressCallback , this };
@@ -111,7 +111,7 @@ void ShareLinkSample::ResumableFileDownloadCancel(const std::string& fileID)
 {
     ResetProgressControlCallTimes();
 
-    FileDownloadRequest downloadRequest("", Config::ShareID, fileID, Config::FileDownloadTo, "checkpoint_dir");
+    FileDownloadRequest downloadRequest("", Config::ShareID, fileID, Config::FileDownloadTo, Config::CheckpointDir);
     downloadRequest.setShareToken(Config::ShareToken);
 
     TransferProgress progressCallback = { ProgressCallback , this };

@@ -11,4 +11,4 @@ std::string Config::RootParentID = "";
 std::string Config::DirToDownload = "";
 std::string Config::FileToUpload = "";
 std::string Config::FileDownloadTo = "";
-std::string Config::CheckpointDir = "";
+std::string Config::CheckpointDir = "checkpoint_dir";

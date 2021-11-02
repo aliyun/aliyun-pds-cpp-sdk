@@ -37,6 +37,7 @@ namespace PDS
         std::string uploadID;
         std::string name;
         std::string filePath;
+        std::string taskID;
         std::string mtime;
         uint64_t size;
         uint64_t partSize;

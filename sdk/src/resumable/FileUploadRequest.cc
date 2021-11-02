@@ -111,6 +111,11 @@ void FileUploadRequest::setUserTags(const AlibabaCloud::PDS::UserTagList& userTa
     userTags_ = userTags;
 }
 
+void FileUploadRequest::setTaskID(const std::string& taskID)
+{
+    taskID_ = taskID;
+}
+
 int FileUploadRequest::validate() const
 {
     auto ret = PdsResumableBaseRequest::validate();
@@ -134,8 +139,9 @@ int FileUploadRequest::validate() const
         return ARG_ERROR_OPEN_UPLOAD_FILE;
     }
 
-    if (checkNameMode_ == "auto_rename") {
-        return -1;
+    //auto_rename is not supported when task id is empty
+    if (taskID_.empty() && checkNameMode_ == "auto_rename") {
+        return ARG_ERROR_UPLOAD_CANNOT_AUTO_RENAME;
     }
 
     return 0;

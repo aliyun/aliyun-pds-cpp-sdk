@@ -173,6 +173,7 @@ FileCompleteOutcome ResumableUploader::Upload()
                 root["uploadID"] = record_.uploadID;
                 root["name"] = record_.name;
                 root["filePath"] = record_.filePath;
+                root["taskID"] = record_.taskID;
                 root["mtime"] = record_.mtime;
                 root["size"] = record_.size;
                 root["partSize"] = record_.partSize;
@@ -235,6 +236,7 @@ FileCompleteOutcome ResumableUploader::Upload()
     FileCompleteRequest completeReq(record_.driveID, record_.fileID, record_.uploadID);
     auto completeOutcome = FileCompleteWrap(completeReq);
     if (!completeOutcome.isSuccess()) {
+        removeRecordFile();
         return FileCompleteOutcome(completeOutcome.error());
     }
 
@@ -253,6 +255,7 @@ FileCompleteOutcome ResumableUploader::Upload()
         }
         uint64_t serverCRC64 = std::strtoull(crc64Hash.c_str(), nullptr, 10);
         if (localCRC64 != serverCRC64) {
+            removeRecordFile();
             return FileCompleteOutcome(PdsError("CrcCheckError", "Resumable Upload data CRC checksum fail."));
         }
     }
@@ -302,7 +305,7 @@ int ResumableUploader::prepare(FileCompleteOutcome& completeOutcome)
         }
 
         auto content = GetFstreamByPath(request_.FilePath(), request_.FilePathW(),
-        std::ios::in | std::ios::binary);
+            std::ios::in | std::ios::binary);
         char streamBuffer[1024];
         uint64_t readSize = 0;
         if (!content->good()) {
@@ -407,6 +410,7 @@ int ResumableUploader::prepare(FileCompleteOutcome& completeOutcome)
         root["uploadID"] = record_.uploadID;
         root["name"] = record_.name;
         root["filePath"] = record_.filePath;
+        root["taskID"] = record_.taskID;
         root["mtime"] = record_.mtime;
         root["size"] = record_.size;
         root["partSize"] = record_.partSize;
@@ -441,6 +445,7 @@ int ResumableUploader::validateRecord()
     root["uploadID"] = record.uploadID;
     root["name"] = record.name;
     root["filePath"] = record.filePath;
+    root["taskID"] = record.taskID;
     root["mtime"] = record.mtime;
     root["size"] = record.size;
     root["partSize"] = record.partSize;
@@ -481,6 +486,7 @@ int ResumableUploader::loadRecord()
         record_.uploadID = root["uploadID"].asString();
         record_.name = root["name"].asString();
         record_.filePath = root["filePath"].asString();
+        record_.taskID = root["taskID"].asString();
         record_.size = root["size"].asUInt64();
         record_.mtime = root["mtime"].asString();
         record_.partSize = root["partSize"].asUInt64();
@@ -515,11 +521,12 @@ void ResumableUploader::genRecordPath()
     std::stringstream ss;
     if (request_.FileID().empty()) {
         // create file
-        ss << "pds://" << request_.DriveID() << "/" << request_.ParentFileID() << "/" << request_.Name();
+        ss << "pds://" << request_.DriveID() << "/" << request_.ParentFileID() << "/" << request_.Name() <<
+            "/" << request_.TaskID();
     }
     else {
         // edit file
-        ss << "pds://" << request_.DriveID() << "/" << request_.FileID();
+        ss << "pds://" << request_.DriveID() << "/" << request_.FileID() << "/" << request_.TaskID();
     }
 
     auto destPath = ss.str();
@@ -578,6 +585,7 @@ void ResumableUploader::initRecordInfo()
     record_.driveID = request_.DriveID();
     record_.name = request_.Name();
     record_.filePath = filePath;
+    record_.taskID = request_.TaskID();
     record_.mtime = request_.FileMtime();
     record_.size = fileSize_;
     record_.partSize = partSize_;

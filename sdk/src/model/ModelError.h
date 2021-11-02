@@ -62,6 +62,9 @@ namespace PDS
 
     /*Get Data*/
     const int ARG_ERROR_DATA_RANGE_INVALID = ARG_ERROR_BASE + 20;
+
+    /*PDS API Param*/
+    const int ARG_ERROR_UPLOAD_CANNOT_AUTO_RENAME = ARG_ERROR_BASE + 21;
 }
 }
 

@@ -254,6 +254,7 @@ DataGetOutcome ResumableDownloader::Download()
         }
         uint64_t serverCRC64 = std::strtoull(crc64Hash_.c_str(), nullptr, 10);
         if (localCRC64 != serverCRC64) {
+            removeRecordFile();
             return DataGetOutcome(PdsError("CrcCheckError", "Resumable Download data CRC checksum fail."));
         }
     }

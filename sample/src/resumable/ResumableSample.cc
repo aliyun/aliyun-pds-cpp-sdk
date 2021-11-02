@@ -38,7 +38,7 @@ void ResumableSample::PrintError(const std::string &funcName, const PdsError &er
 std::string ResumableSample::ResumableFileUpload()
 {
     std::string fileID;
-    FileUploadRequest uploadRequest(Config::DriveID, Config::RootParentID, "test_resumable_file", "", "refuse", Config::FileToUpload, "checkpoint_dir");
+    FileUploadRequest uploadRequest(Config::DriveID, Config::RootParentID, "test_resumable_file", "", "refuse", Config::FileToUpload, Config::CheckpointDir);
 
     // set user tags when create
     UserTagList userTagList;
@@ -66,7 +66,7 @@ std::string ResumableSample::ResumableFileUploadStopOnce()
     ResetProgressControlCallTimes();
 
     std::string fileID;
-    FileUploadRequest uploadRequest(Config::DriveID, Config::RootParentID, "test_resumable_file_stop_once", "", "refuse", Config::FileToUpload, "checkpoint_dir");
+    FileUploadRequest uploadRequest(Config::DriveID, Config::RootParentID, "test_resumable_file_stop_once", "", "refuse", Config::FileToUpload, Config::CheckpointDir);
     TransferProgress progressCallback = { ProgressCallback , this };
     uploadRequest.setTransferProgress(progressCallback);
 
@@ -102,7 +102,7 @@ std::string ResumableSample::ResumableFileUploadCancel()
     ResetProgressControlCallTimes();
 
     std::string fileID;
-    FileUploadRequest uploadRequest(Config::DriveID, Config::RootParentID, "test_resumable_file_cancel", "", "refuse", Config::FileToUpload, "checkpoint_dir");
+    FileUploadRequest uploadRequest(Config::DriveID, Config::RootParentID, "test_resumable_file_cancel", "", "refuse", Config::FileToUpload, Config::CheckpointDir);
     TransferProgress progressCallback = { ProgressCallback , this };
     uploadRequest.setTransferProgress(progressCallback);
 
@@ -122,7 +122,7 @@ std::string ResumableSample::ResumableFileUploadCancel()
 
 void ResumableSample::ResumableFileDownload(const std::string& fileID)
 {
-    FileDownloadRequest downloadRequest(Config::DriveID, "", fileID, Config::FileDownloadTo, "checkpoint_dir");
+    FileDownloadRequest downloadRequest(Config::DriveID, "", fileID, Config::FileDownloadTo, Config::CheckpointDir);
     TransferProgress progressCallback = { ProgressCallback , this };
     downloadRequest.setTransferProgress(progressCallback);
     auto getOutcome = client->ResumableFileDownload(downloadRequest);
@@ -138,7 +138,7 @@ void ResumableSample::ResumableFileDownloadStopOnce(const std::string& fileID)
 {
     ResetProgressControlCallTimes();
 
-    FileDownloadRequest downloadRequest(Config::DriveID, "", fileID, Config::FileDownloadTo, "checkpoint_dir");
+    FileDownloadRequest downloadRequest(Config::DriveID, "", fileID, Config::FileDownloadTo, Config::CheckpointDir);
     TransferProgress progressCallback = { ProgressCallback , this };
     downloadRequest.setTransferProgress(progressCallback);
 
@@ -168,7 +168,7 @@ void ResumableSample::ResumableFileDownloadCancel(const std::string& fileID)
 {
     ResetProgressControlCallTimes();
 
-    FileDownloadRequest downloadRequest(Config::DriveID, "", fileID, Config::FileDownloadTo, "checkpoint_dir");
+    FileDownloadRequest downloadRequest(Config::DriveID, "", fileID, Config::FileDownloadTo, Config::CheckpointDir);
     TransferProgress progressCallback = { ProgressCallback , this };
     downloadRequest.setTransferProgress(progressCallback);
 
