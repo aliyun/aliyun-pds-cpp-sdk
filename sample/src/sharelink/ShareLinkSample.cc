@@ -30,6 +30,23 @@ void ShareLinkSample::PrintError(const std::string &funcName, const PdsError &er
         ",request_id:" << error.RequestId() << std::endl;
 }
 
+void ShareLinkSample::DirList(const std::string& parentFileID)
+{
+    DirListRequest request("", Config::ShareID, parentFileID, "updated_at", "DESC", "*", "", 10);
+    request.setShareToken(Config::ShareToken);
+
+    auto outcome = client->DirList(request);
+    if (!outcome.isSuccess()) {
+        PrintError(__FUNCTION__, outcome.error());
+        return;
+    }
+    std::cout << __FUNCTION__ << " call DirList success, parent file id: " <<  parentFileID << std::endl;
+    auto fileList = outcome.result().FileItemList();
+    for (uint32_t i = 0; i < fileList.size(); i++) {
+        std::cout << "Type: " << fileList[i].Type() << ", FileID: " << fileList[i].FileID() <<  ", Name: " << fileList[i].Name() << std::endl;
+    }
+}
+
 void ShareLinkSample::FileDownload(const std::string& fileID)
 {
     FileGetDownloadUrlRequest request("", Config::ShareID, fileID);

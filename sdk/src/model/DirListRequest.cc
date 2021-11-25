@@ -23,10 +23,18 @@
 #include <sstream>
 using namespace AlibabaCloud::PDS;
 
-DirListRequest::DirListRequest(const std::string& driveID, const std::string& parentFileID,
+
+DirListRequest::DirListRequest(const std::string& driveID,  const std::string& parentFileID,
+    const std::string& orderBy, const std::string& orderDirection,
+    const std::string& fields, const std::string& marker, int64_t limit):
+    DirListRequest(driveID, "", parentFileID, orderBy, orderDirection, fields, marker, limit)
+{}
+
+DirListRequest::DirListRequest(const std::string& driveID, const std::string& shareID, const std::string& parentFileID,
     const std::string& orderBy, const std::string& orderDirection,
     const std::string& fields, const std::string& marker, int64_t limit):
         driveID_(driveID),
+        shareID_(shareID),
         parentFileID_(parentFileID),
         orderBy_(orderBy),
         orderDirection_(orderDirection),
@@ -45,7 +53,12 @@ DirListRequest::DirListRequest(const std::string& driveID, const std::string& pa
 std::shared_ptr<std::iostream> DirListRequest::Body() const
 {
     Json::Value root;
-    root["drive_id"] = driveID_;
+    if (!driveID_.empty()) {
+        root["drive_id"] = driveID_;
+    }
+    if (!shareID_.empty()) {
+        root["share_id"] = shareID_;
+    }
     root["parent_file_id"] = parentFileID_;
     root["order_by"] = orderBy_;
     root["order_direction"] = orderDirection_;
@@ -108,6 +121,20 @@ void DirListRequest::setAll(bool* all)
     if (nullptr != all) {
         all_ = all;
     }
+}
+
+void DirListRequest::setShareToken(const std::string& shareToken)
+{
+    shareToken_ = shareToken;
+}
+
+HeaderCollection DirListRequest::specialHeaders() const
+{
+    auto headers = PdsRequest::specialHeaders();
+    if (!shareToken_.empty()) {
+        headers["x-share-token"] = shareToken_;
+    }
+    return headers;
 }
 
 int DirListRequest::validate() const

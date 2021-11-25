@@ -65,6 +65,9 @@ int main(void)
         shareLinkSample.FileDownload(shareFileID);
         shareLinkSample.ResumableFileDownload(shareFileID);
     }
+    if (!Config::ShareID.empty()) {
+        shareLinkSample.DirList(Config::RootParentID);
+    }
 
     ShutdownSdk();
     return 0;

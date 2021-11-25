@@ -6,6 +6,7 @@ public:
     ShareLinkSample();
     ~ShareLinkSample();
 
+    void DirList(const std::string& parentFileID);
     void FileDownload(const std::string& fileID);
     void ResumableFileDownload(const std::string& fileID);
     void ResumableFileDownloadStopOnce(const std::string& fileID);
