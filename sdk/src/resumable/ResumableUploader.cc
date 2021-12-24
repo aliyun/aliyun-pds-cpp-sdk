@@ -589,6 +589,7 @@ void ResumableUploader::initRecordInfo()
     record_.mtime = request_.FileMtime();
     record_.size = fileSize_;
     record_.partSize = partSize_;
+    record_.parts.resize(0);
 }
 
 void ResumableUploader::UploadPartProcessCallback(size_t increment, int64_t transfered, int64_t total, void *userData)
