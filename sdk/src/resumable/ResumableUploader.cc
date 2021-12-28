@@ -258,7 +258,7 @@ FileCompleteOutcome ResumableUploader::Upload()
             // check sha1
             std::string cHash = completeOutcome.result().ContentHash();
             std::string cHashName = completeOutcome.result().ContentHashName();
-            if (cHashName == "sha1" and !cHash.empty()) {
+            if (cHashName == "sha1" && !cHash.empty()) {
                 std::string hashSHA1;
                 if (0 != ComputeFileSha1(completeOutcome, hashSHA1)){
                     return completeOutcome;
