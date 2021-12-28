@@ -255,8 +255,25 @@ FileCompleteOutcome ResumableUploader::Upload()
         }
         uint64_t serverCRC64 = std::strtoull(crc64Hash.c_str(), nullptr, 10);
         if (localCRC64 != serverCRC64) {
-            removeRecordFile();
-            return FileCompleteOutcome(PdsError("CrcCheckError", "Resumable Upload data CRC checksum fail."));
+            // check sha1
+            std::string cHash = completeOutcome.result().ContentHash();
+            std::string cHashName = completeOutcome.result().ContentHashName();
+            if (cHashName == "sha1" and !cHash.empty()) {
+                std::string hashSHA1;
+                if (0 != ComputeFileSha1(completeOutcome, hashSHA1)){
+                    return completeOutcome;
+                }
+                transform(cHash.begin(), cHash.end(), cHash.begin(), ::toupper);
+                transform(hashSHA1.begin(), hashSHA1.end(), hashSHA1.begin(), ::toupper);
+                if (0 != cHash.compare(hashSHA1)) {
+                    removeRecordFile();
+                    return FileCompleteOutcome(PdsError("Sha1CheckError", "Resumable Upload data SHA1 checksum fail."));
+                }
+            }
+            else {
+                removeRecordFile();
+                return FileCompleteOutcome(PdsError("CrcCheckError", "Resumable Upload data CRC checksum fail."));
+            }
         }
     }
 
@@ -337,22 +354,9 @@ int ResumableUploader::prepare(FileCompleteOutcome& completeOutcome)
             }
 
             // check pre hash matched, rapid upload
-            auto content = GetFstreamByPath(request_.FilePath(), request_.FilePathW(),
-            std::ios::in | std::ios::binary);
-            std::string hashSHA1 = ComputeContentSha1(*content, request_.ProgressControl());
-            content->close();
-
-            // cancel/stop compute sha1 by upper
-            if (hashSHA1.empty()) {
-                int32_t controlFlag = UploadPartProcessControlCallback((void *)this);
-                if (controlFlag == ProgressControlStop) {
-                    completeOutcome = FileCompleteOutcome(PdsError("ClientError:100003", "Upload stop by upper."));
-                    return -1;
-                }
-                if (controlFlag == ProgressControlCancel) {
-                    completeOutcome =  FileCompleteOutcome(PdsError("ClientError:100004", "Upload cancel by upper."));
-                    return -1;
-                }
+            std::string hashSHA1;
+            if (0 != ComputeFileSha1(completeOutcome, hashSHA1)){
+                return -1;
             }
 
             // rapid upload request
@@ -376,11 +380,13 @@ int ResumableUploader::prepare(FileCompleteOutcome& completeOutcome)
 
             // failed to rapid upload, upload data
             outcome = fileCreateRapidUploadOutcome.result();
-        } else {
+        }
+        else {
             // pre hash check not matched, upload data
             outcome = fileCreatePreCheckOutcome.result();
         }
-    } else {
+    }
+    else {
         // create by upload data
         FileCreateRequest fileCreateReq = FileCreateRequest(request_.DriveID(), request_.ParentFileID(), request_.Name(),
             request_.FileID(), request_.CheckNameMode(), fileSize_);
@@ -561,7 +567,8 @@ int ResumableUploader::getPartsToUpload(PdsError &err, UploadPartRecordList &par
         part.partNumber = i+1;
         if (i == partCount -1 ){
             part.size = fileSize_ - partSize_ * (partCount - 1);
-        }else{
+        }
+        else {
             part.size = partSize_;
         }
 
@@ -617,6 +624,30 @@ int32_t ResumableUploader::UploadPartProcessControlCallback(void *userData)
     }
     return 0;
 }
+
+int ResumableUploader::ComputeFileSha1(FileCompleteOutcome& completeOutcome, std::string &hashSHA1)
+{
+    auto content = GetFstreamByPath(request_.FilePath(), request_.FilePathW(),
+        std::ios::in | std::ios::binary);
+    hashSHA1 = ComputeContentSha1(*content, request_.ProgressControl());
+    content->close();
+
+    // cancel/stop compute sha1 by upper
+    if (hashSHA1.empty()) {
+        int32_t controlFlag = UploadPartProcessControlCallback((void *)this);
+        if (controlFlag == ProgressControlStop) {
+            completeOutcome = FileCompleteOutcome(PdsError("ClientError:100003", "Upload stop by upper."));
+            return -1;
+        }
+        if (controlFlag == ProgressControlCancel) {
+            completeOutcome =  FileCompleteOutcome(PdsError("ClientError:100004", "Upload cancel by upper."));
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
 
 FileCreateOutcome ResumableUploader::FileCreateWrap(const FileCreateRequest &request) const
 {

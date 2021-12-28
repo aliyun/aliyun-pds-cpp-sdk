@@ -69,6 +69,7 @@ namespace PDS
         int loadRecord();
         static void UploadPartProcessCallback(size_t increment, int64_t transfered, int64_t total, void *userData);
         static int32_t UploadPartProcessControlCallback(void *userData);
+        int ComputeFileSha1(FileCompleteOutcome& completeOutcome, std::string &hashSHA1);
 
         const FileUploadRequest& request_;
         UploadRecord record_;
