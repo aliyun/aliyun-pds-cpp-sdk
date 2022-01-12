@@ -770,14 +770,20 @@ DataGetOutcome PdsClientImpl::ResumableFileDownload(const FileDownloadRequest &r
             return DataGetOutcome(PdsError("FileSizeCheckError", "Download data check size fail."));
         }
 
+        bool renameSuccess = false;
         if (!request.TempFilePath().empty()) {
-            RenameFile(request.TempFilePath(), request.FilePath());
+            renameSuccess = RenameFile(request.TempFilePath(), request.FilePath());
         }
 #ifdef _WIN32
         else if (!request.TempFilePathW().empty()) {
-            RenameFile(request.TempFilePathW(), request.FilePathW());
+           renameSuccess = RenameFile(request.TempFilePathW(), request.FilePathW());
         }
 #endif
+        if (!renameSuccess) {
+            std::stringstream ss;
+            ss << "rename temp file failed";
+            return DataGetOutcome(PdsError("RenameError", ss.str()));
+        }
 
         if (IsFileExist(request.TempFilePath())) {
             RemoveFile(request.TempFilePath());
