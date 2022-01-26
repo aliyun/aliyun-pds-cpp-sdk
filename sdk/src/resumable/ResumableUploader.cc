@@ -344,6 +344,7 @@ int ResumableUploader::prepare(FileCompleteOutcome& completeOutcome)
             request_.FileID(), request_.CheckNameMode(), request_.FileSize());
         fileCreatePreCheckReq.setPreHash(preHashSHA1);
         fileCreatePreCheckReq.setUserTags(request_.UserTags());
+        fileCreatePreCheckReq.setHidden(request_.Hidden());
         auto fileCreatePreCheckOutcome = FileCreateWrap(fileCreatePreCheckReq);
 
         if (!fileCreatePreCheckOutcome.isSuccess()) {
@@ -364,6 +365,7 @@ int ResumableUploader::prepare(FileCompleteOutcome& completeOutcome)
                 request_.FileID(), request_.CheckNameMode(), request_.FileSize());
             fileCreateRapidUploadReq.setContentHash(hashSHA1);
             fileCreateRapidUploadReq.setUserTags(request_.UserTags());
+            fileCreateRapidUploadReq.setHidden(request_.Hidden());
             auto fileCreateRapidUploadOutcome = FileCreateWrap(fileCreateRapidUploadReq);
 
             if (!fileCreateRapidUploadOutcome.isSuccess()) {
@@ -391,6 +393,7 @@ int ResumableUploader::prepare(FileCompleteOutcome& completeOutcome)
         FileCreateRequest fileCreateReq = FileCreateRequest(request_.DriveID(), request_.ParentFileID(), request_.Name(),
             request_.FileID(), request_.CheckNameMode(), fileSize_);
         fileCreateReq.setUserTags(request_.UserTags());
+        fileCreateReq.setHidden(request_.Hidden());
         auto fileCreateOutcome = FileCreateWrap(fileCreateReq);
         if (!fileCreateOutcome.isSuccess()) {
             completeOutcome = FileCompleteOutcome(fileCreateOutcome.error());

@@ -116,6 +116,11 @@ void FileUploadRequest::setTaskID(const std::string& taskID)
     taskID_ = taskID;
 }
 
+void FileUploadRequest::setHidden(bool hidden)
+{
+    hidden_ = hidden;
+}
+
 int FileUploadRequest::validate() const
 {
     auto ret = PdsResumableBaseRequest::validate();

@@ -33,6 +33,7 @@ namespace PDS
         virtual std::shared_ptr<std::iostream> Body() const;
 
         void setUserTags(const AlibabaCloud::PDS::UserTagList& userTags);
+        void setHidden(bool hidden);
     protected:
         int validate() const;
     private:
@@ -42,6 +43,7 @@ namespace PDS
         std::string checkNameMode_;
         std::string type_;
         AlibabaCloud::PDS::UserTagList userTags_;
+        bool hidden_;
     };
 }
 }

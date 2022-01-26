@@ -29,7 +29,8 @@ DirCreateRequest::DirCreateRequest(const std::string& driveID, const std::string
         parentFileID_(parentFileID),
         name_(name),
         checkNameMode_(checkNameMode),
-        type_("folder")
+        type_("folder"),
+        hidden_(false)
 {
     setPath("/v2/file/create");
 }
@@ -42,6 +43,7 @@ std::shared_ptr<std::iostream> DirCreateRequest::Body() const
     root["name"] = name_;
     root["check_name_mode"] = checkNameMode_;
     root["type"] = type_;
+    root["hidden"] = hidden_;
 
     int index = 0;
     for (const UserTag& userTag : userTags_) {
@@ -61,6 +63,11 @@ std::shared_ptr<std::iostream> DirCreateRequest::Body() const
 void DirCreateRequest::setUserTags(const AlibabaCloud::PDS::UserTagList& userTags)
 {
     userTags_ = userTags;
+}
+
+void DirCreateRequest::setHidden(bool hidden)
+{
+    hidden_ = hidden;
 }
 
 int DirCreateRequest::validate() const

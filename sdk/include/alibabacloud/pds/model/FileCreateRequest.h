@@ -38,6 +38,7 @@ namespace PDS
         void setUserTags(const AlibabaCloud::PDS::UserTagList& userTags);
         void setPreHash(const std::string& preHash);
         void setContentHash(const std::string& contentHash);
+        void setHidden(bool hidden);
     protected:
         int validate() const;
     private:
@@ -52,6 +53,7 @@ namespace PDS
         AlibabaCloud::PDS::UserTagList userTags_;
         std::string preHash_;
         std::string contentHash_;
+        bool hidden_;
     };
 }
 }

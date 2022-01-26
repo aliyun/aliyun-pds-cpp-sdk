@@ -33,7 +33,8 @@ FileCreateRequest::FileCreateRequest(const std::string& driveID, const std::stri
         fileID_(fileID),
         checkNameMode_(checkNameMode),
         size_(size),
-        type_("file")
+        type_("file"),
+        hidden_(false)
 {
     setPath("/v2/file/create");
 }
@@ -47,6 +48,7 @@ std::shared_ptr<std::iostream> FileCreateRequest::Body() const
     root["check_name_mode"] = checkNameMode_;
     root["size"] = size_;
     root["type"] = type_;
+    root["hidden"] = hidden_;
     if (!fileID_.empty()) {
         root["file_id"] = fileID_;
     }
@@ -100,6 +102,11 @@ void FileCreateRequest::setPreHash(const std::string& preHash)
 void FileCreateRequest::setContentHash(const std::string& contentHash)
 {
     contentHash_ = contentHash;
+}
+
+void FileCreateRequest::setHidden(bool hidden)
+{
+    hidden_ = hidden;
 }
 
 int FileCreateRequest::validate() const

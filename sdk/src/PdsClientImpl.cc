@@ -592,6 +592,7 @@ FileCompleteOutcome PdsClientImpl::ResumableFileUpload(const FileUploadRequest &
             fileCreatePreCheckReq.setPreHash(preHashSHA1);
             fileCreatePreCheckReq.setPartInfoList(partInfoReqList);
             fileCreatePreCheckReq.setUserTags(request.UserTags());
+            fileCreatePreCheckReq.setHidden(request.Hidden());
             auto fileCreatePreCheckOutcome = FileCreate(fileCreatePreCheckReq);
 
             if (!fileCreatePreCheckOutcome.isSuccess()) {
@@ -612,6 +613,7 @@ FileCompleteOutcome PdsClientImpl::ResumableFileUpload(const FileUploadRequest &
                 fileCreateRapidUploadReq.setContentHash(hashSHA1);
                 fileCreateRapidUploadReq.setPartInfoList(partInfoReqList);
                 fileCreateRapidUploadReq.setUserTags(request.UserTags());
+                fileCreateRapidUploadReq.setHidden(request.Hidden());
                 auto fileCreateRapidUploadOutcome = FileCreate(fileCreateRapidUploadReq);
 
                 if (!fileCreateRapidUploadOutcome.isSuccess()) {
@@ -636,6 +638,7 @@ FileCompleteOutcome PdsClientImpl::ResumableFileUpload(const FileUploadRequest &
                 request.FileID(), request.CheckNameMode(), request.FileSize());
             fileCreateReq.setPartInfoList(partInfoReqList);
             fileCreateReq.setUserTags(request.UserTags());
+            fileCreateReq.setHidden(request.Hidden());
             auto fileCreateOutcome = FileCreate(fileCreateReq);
             if (!fileCreateOutcome.isSuccess()) {
                 return FileCompleteOutcome(fileCreateOutcome.error());
