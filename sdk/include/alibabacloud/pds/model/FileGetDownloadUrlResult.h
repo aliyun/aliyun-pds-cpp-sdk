@@ -37,6 +37,7 @@ namespace PDS
         const std::string& Method() const { return method_; }
         int64_t Size() const { return size_; }
         const std::string& Url() const { return url_; }
+        int64_t PunishFlag() const { return punishFlag_; }
     private:
         std::string contentHash_;
         std::string contentHashName_;
@@ -47,6 +48,7 @@ namespace PDS
         std::string method_;
         int64_t size_;
         std::string url_;
+        int64_t punishFlag_;
     };
 }
 }

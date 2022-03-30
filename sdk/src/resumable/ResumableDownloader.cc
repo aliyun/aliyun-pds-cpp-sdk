@@ -241,9 +241,11 @@ DataGetOutcome ResumableDownloader::Download()
     });
 
     // check size
-    uint64_t localFileSize = GetFileSize(request_.TempFilePath(), request_.TempFilePathW());
-    if (fileSize_ != localFileSize) {
-        return DataGetOutcome(PdsError("FileSizeCheckError", "Resumable Download data check size fail."));
+    if (client_->configuration().enableCheckDownloadFileSize) {
+        uint64_t localFileSize = GetFileSize(request_.TempFilePath(), request_.TempFilePathW());
+        if (fileSize_ != localFileSize) {
+            return DataGetOutcome(PdsError("FileSizeCheckError", "Resumable Download data check size fail."));
+        }
     }
 
     // check crc64

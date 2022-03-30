@@ -102,6 +102,15 @@ namespace PDS
         */
         bool enableRapidUpload;
         /**
+        * enable or disable check download file size.
+        */
+        bool enableCheckDownloadFileSize;
+        /**
+        * enable or disable download punished file.
+        */
+        bool enableDownloadPunishedFile;
+        /**
+         *
         * Rate limit data upload speed.
         */
         std::shared_ptr<RateLimiter> sendRateLimiter;

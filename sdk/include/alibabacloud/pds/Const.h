@@ -29,6 +29,7 @@ namespace PDS
     const int32_t ProgressControlContinue = 0;
     const int32_t ProgressControlStop = 1;
     const int32_t ProgressControlCancel = 2;
+    const int64_t PunishFlagFileFreeze = 2LL;
 
     const std::string DefaultImageThumbnailProcess = "image/resize,w_160/format,jpeg";
     const std::string DefaultImageUrlProcess = "image/resize,w_1920/format,jpeg";

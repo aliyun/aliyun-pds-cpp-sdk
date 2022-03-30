@@ -722,12 +722,20 @@ DataGetOutcome PdsClientImpl::ResumableFileDownload(const FileDownloadRequest &r
         return DataGetOutcome(getDownloadUrlOutcome.error());
     }
 
+    auto url = getDownloadUrlOutcome.result().Url();
+    if (url.empty()) {
+        return DataGetOutcome(PdsError("DownloadUrlEmptyError", "Download data url is empty."));
+    }
+    auto punishFlag = getDownloadUrlOutcome.result().PunishFlag();
+    if (!configuration().enableDownloadPunishedFile && punishFlag == PunishFlagFileFreeze) {
+        return DataGetOutcome(PdsError("FileIsPunished", "Punished File cannot be downloaded."));
+    }
     auto fileSize = getDownloadUrlOutcome.result().Size();
     auto contentHash = getDownloadUrlOutcome.result().ContentHash();
     auto crc64Hash = getDownloadUrlOutcome.result().Crc64Hash();
-    auto url = getDownloadUrlOutcome.result().Url();
 
-    if (fileSize < (int64_t)request.PartSize()) {
+    // small file and punished file are downloaded by single OSS GET request
+    if (fileSize < (int64_t)request.PartSize() || punishFlag == PunishFlagFileFreeze) {
         auto getDataReq = DataGetByUrlRequest(url);
         if (request.TransferProgress().Handler) {
             getDataReq.setTransferProgress(request.TransferProgress());
@@ -742,6 +750,9 @@ DataGetOutcome PdsClientImpl::ResumableFileDownload(const FileDownloadRequest &r
             return GetFstreamByPath(request.TempFilePath(), request.TempFilePathW(),
                 std::ios_base::out | std::ios_base::in | std::ios_base::trunc | std::ios_base::binary);
         });
+        if (configuration().enableCrc64 && !crc64Hash.empty()) {
+            getDataReq.setFlags(getDataReq.Flags() | REQUEST_FLAG_CHECK_CRC64 | REQUEST_FLAG_SAVE_CLIENT_CRC64);
+        }
         auto outcome = DataGetByUrl(getDataReq);
 
         auto controller = request.ProgressControl();
@@ -768,9 +779,28 @@ DataGetOutcome PdsClientImpl::ResumableFileDownload(const FileDownloadRequest &r
         outcome.result().setContent(content);
 
         // check size
-        uint64_t localFileSize = GetFileSize(request.TempFilePath(), request.TempFilePathW());
-        if (uint64_t(fileSize) != localFileSize) {
-            return DataGetOutcome(PdsError("FileSizeCheckError", "Download data check size fail."));
+        if (configuration().enableCheckDownloadFileSize) {
+            uint64_t localFileSize = GetFileSize(request.TempFilePath(), request.TempFilePathW());
+            // for punished file, downloaded file size may not be equal to origin file size
+            if (uint64_t(fileSize) != localFileSize && punishFlag != PunishFlagFileFreeze) {
+                return DataGetOutcome(PdsError("FileSizeCheckError", "Download data check size fail."));
+            }
+        }
+
+        if (configuration().enableCrc64 && !crc64Hash.empty()) {
+            auto localCRC64 = std::strtoull(outcome.result().Metadata().HttpMetaData().at("x-oss-hash-crc64ecma-by-client").c_str(), nullptr, 10);
+            uint64_t ossServerCrc64 = std::strtoull(outcome.result().Metadata().HttpMetaData().at("x-oss-hash-crc64ecma").c_str(), nullptr, 10);
+            if (localCRC64 != ossServerCrc64) {
+                if (IsFileExist(request.TempFilePath())) {
+                    RemoveFile(request.TempFilePath());
+                }
+#ifdef _WIN32
+                else if (IsFileExist(request.TempFilePathW())) {
+                    RemoveFile(request.TempFilePathW());
+                }
+#endif
+                return DataGetOutcome(PdsError("CrcCheckError", "Download data CRC checksum fail."));
+            }
         }
 
         bool renameSuccess = false;

@@ -47,4 +47,5 @@ FileGetDownloadUrlResult::FileGetDownloadUrlResult(
     method_ = root["method"].asString();
     size_ = root["size"].asInt64();
     url_ = root["url"].asString();
+    punishFlag_ = root["punish_flag"].asInt64();
 }
