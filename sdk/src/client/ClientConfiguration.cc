@@ -113,6 +113,8 @@ ClientConfiguration::ClientConfiguration() :
     isCname(false),
     enableCrc64(true),
     enableRapidUpload(false),
+    enableCheckDownloadFileSize(true),
+    enableDownloadPunishedFile(true),
     sendRateLimiter(nullptr),
     recvRateLimiter(nullptr),
     executor(nullptr),
