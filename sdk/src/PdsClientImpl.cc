@@ -362,6 +362,17 @@ DirListOutcome PdsClientImpl::DirList(const DirListRequest& request) const
     }
 }
 
+DirSearchOutcome PdsClientImpl::DirSearch(const DirSearchRequest& request) const
+{
+    auto outcome = MakeRequest(request, Http::Method::Post);
+    if (outcome.isSuccess()) {
+        return DirSearchOutcome(DirSearchResult(outcome.result().payload()));
+    }
+    else {
+        return DirSearchOutcome(outcome.error());
+    }
+}
+
 DirRenameOutcome PdsClientImpl::DirRename(const DirRenameRequest& request) const
 {
     auto outcome = MakeRequest(request, Http::Method::Post);

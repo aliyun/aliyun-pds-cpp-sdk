@@ -109,6 +109,11 @@ DirListOutcome PdsClient::DirList(const DirListRequest& request) const
     return client_->DirList(request);
 }
 
+DirSearchOutcome PdsClient::DirSearch(const DirSearchRequest& request) const
+{
+    return client_->DirSearch(request);
+}
+
 DirRenameOutcome PdsClient::DirRename(const DirRenameRequest& request) const
 {
     return client_->DirRename(request);

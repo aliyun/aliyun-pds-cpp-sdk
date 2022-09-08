@@ -35,6 +35,8 @@
 #include <alibabacloud/pds/model/DirDeleteResult.h>
 #include <alibabacloud/pds/model/DirListRequest.h>
 #include <alibabacloud/pds/model/DirListResult.h>
+#include <alibabacloud/pds/model/DirSearchRequest.h>
+#include <alibabacloud/pds/model/DirSearchResult.h>
 #include <alibabacloud/pds/model/DirRenameRequest.h>
 #include <alibabacloud/pds/model/DirRenameResult.h>
 #include <alibabacloud/pds/model/DirTrashRequest.h>
@@ -85,6 +87,7 @@ namespace PDS
 
     using DirCreateOutcome = Outcome<PdsError, DirCreateResult>;
     using DirListOutcome = Outcome<PdsError, DirListResult>;
+    using DirSearchOutcome = Outcome<PdsError, DirSearchResult>;
     using DirRenameOutcome = Outcome<PdsError, DirRenameResult>;
     using DirTrashOutcome = Outcome<PdsError, DirTrashResult>;
     using DirDeleteOutcome = Outcome<PdsError, DirDeleteResult>;

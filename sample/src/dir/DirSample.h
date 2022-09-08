@@ -9,6 +9,7 @@ public:
     std::string DirCreate();
     void DirRename(const std::string& fileID);
     void DirList(const std::string& parentFileID);
+    void DirSearch();
     void DirTrash(const std::string& fileID);
     std::string DirDelete(const std::string& fileID);
     void AsyncTaskGet(const std::string& fileID);

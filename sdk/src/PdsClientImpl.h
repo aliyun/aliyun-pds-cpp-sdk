@@ -47,6 +47,7 @@ namespace PDS
         /*Dir*/
         DirCreateOutcome DirCreate(const DirCreateRequest& request) const;
         DirListOutcome DirList(const DirListRequest& request) const;
+        DirSearchOutcome DirSearch(const DirSearchRequest& request) const;
         DirRenameOutcome DirRename(const DirRenameRequest& request) const;
         DirTrashOutcome DirTrash(const DirTrashRequest& request) const;
         DirDeleteOutcome DirDelete(const DirDeleteRequest& request) const;

@@ -76,6 +76,21 @@ void DirSample::DirList(const std::string& parentFileID)
     }
 }
 
+void DirSample::DirSearch()
+{
+    DirSearchRequest request(Config::DriveID, "name match \"123\"", "updated_at DESC", "", 20);
+    auto outcome = client->DirSearch(request);
+    if (!outcome.isSuccess()) {
+        PrintError(__FUNCTION__, outcome.error());
+        return;
+    }
+    std::cout << __FUNCTION__ << " call DirSearch success: " << std::endl;
+    auto fileList = outcome.result().FileItemList();
+    for (uint32_t i = 0; i < fileList.size(); i++) {
+        std::cout << "Type: " << fileList[i].Type() << ", FileID: " << fileList[i].FileID() <<  ", Name: " << fileList[i].Name() << std::endl;
+    }
+}
+
 void DirSample::DirTrash(const std::string& fileID)
 {
     DirTrashRequest request(Config::DriveID, fileID);
