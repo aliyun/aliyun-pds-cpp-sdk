@@ -178,6 +178,10 @@ FileDeleteOutcome PdsClient::FileDelete(const FileDeleteRequest& request) const
     return client_->FileDelete(request);
 }
 
+FileGetVideoPreviewPlayInfoOutcome PdsClient::FileGetVideoPreviewPlayInfo(const FileGetVideoPreviewPlayInfoRequest& request) const
+{
+    return client_->FileGetVideoPreviewPlayInfo(request);
+}
 
 ////////////////////
 // Data

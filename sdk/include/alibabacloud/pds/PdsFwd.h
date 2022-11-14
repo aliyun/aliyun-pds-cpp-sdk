@@ -62,6 +62,8 @@
 #include <alibabacloud/pds/model/FileTrashResult.h>
 #include <alibabacloud/pds/model/FileUploadRequest.h>
 #include <alibabacloud/pds/model/FileDownloadRequest.h>
+#include <alibabacloud/pds/model/FileGetVideoPreviewPlayInfoRequest.h>
+#include <alibabacloud/pds/model/FileGetVideoPreviewPlayInfoResult.h>
 
 #include <alibabacloud/pds/model/DataGetByUrlRequest.h>
 #include <alibabacloud/pds/model/DataGetResult.h>
@@ -101,6 +103,7 @@ namespace PDS
     using FileRenameOutcome = Outcome<PdsError, FileRenameResult>;
     using FileTrashOutcome = Outcome<PdsError, FileTrashResult>;
     using FileDeleteOutcome = Outcome<PdsError, FileDeleteResult>;
+    using FileGetVideoPreviewPlayInfoOutcome = Outcome<PdsError, FileGetVideoPreviewPlayInfoResult>;
 
     using DataGetOutcome = Outcome<PdsError, DataGetResult>;
     using DataPutOutcome = Outcome<PdsError, DataPutResult>;

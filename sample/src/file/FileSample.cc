@@ -170,6 +170,35 @@ void FileSample::FileDelete(const std::string& fileID)
     std::cout << __FUNCTION__ << " call FileDelete success, file id: " << fileID << std::endl;
 }
 
+void FileSample::FileGetVideoPreviewPlayInfo(const std::string& fileID)
+{
+    bool setGetWithoutUrl = false;
+
+    FileGetVideoPreviewPlayInfoRequest request(Config::DriveID, "", fileID, "live_transcoding");
+    request.setGetWithoutUrl(&setGetWithoutUrl);
+    auto outcome = client->FileGetVideoPreviewPlayInfo(request);
+    if (!outcome.isSuccess()) {
+        PrintError(__FUNCTION__, outcome.error());
+        return;
+    }
+
+    std::cout << __FUNCTION__ << " call FileGetVideoPreviewPlayInfo success" << std::endl;
+    auto result = outcome.result();
+    std::cout << __FUNCTION__ << " domain id: " << result.DomainID() << " drive id: " << result.DriveID() <<
+        " share id: " << result.ShareID() << " file id: " << result.FileID() << std::endl;
+    auto palyInfo = result.VideoPreviewPlayInfo();
+    auto category = palyInfo.Category();
+    std::cout << __FUNCTION__ << " category : " << category << std::endl;
+    auto meta = palyInfo.FileVideoPreviewPlayInfoMeta();
+    std::cout << __FUNCTION__ << " duration : " << meta.Duration() << " width: " << meta.Width() <<
+        " height: " << meta.Height() << std::endl;
+    auto taskList = palyInfo.FileLiveTranscodingTaskList();
+    for (uint32_t i = 0; i < taskList.size(); i++) {
+        std::cout << " template_id: " << taskList[i].TemplateID() << " status: " << taskList[i].Status() <<
+        " url: " << taskList[i].Url() << " keep_original_resolution: " << taskList[i].KeepOriginalResolution() << std::endl;
+    }
+}
+
 void FileSample::UserTagsPut(const std::string& fileID)
 {
 

@@ -69,6 +69,7 @@ namespace PDS
         FileRenameOutcome FileRename(const FileRenameRequest& request) const;
         FileTrashOutcome FileTrash(const FileTrashRequest& request) const;
         FileDeleteOutcome FileDelete(const FileDeleteRequest& request) const;
+        FileGetVideoPreviewPlayInfoOutcome FileGetVideoPreviewPlayInfo(const FileGetVideoPreviewPlayInfoRequest& request) const;
 
         /*Data*/
         DataGetOutcome DataGetByUrl(const DataGetByUrlRequest& request) const;

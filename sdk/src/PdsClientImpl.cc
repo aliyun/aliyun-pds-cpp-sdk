@@ -508,6 +508,16 @@ FileDeleteOutcome PdsClientImpl::FileDelete(const FileDeleteRequest& request) co
     }
 }
 
+FileGetVideoPreviewPlayInfoOutcome PdsClientImpl::FileGetVideoPreviewPlayInfo(const FileGetVideoPreviewPlayInfoRequest& request) const
+{
+    auto outcome = MakeRequest(request, Http::Method::Post);
+    if (outcome.isSuccess()) {
+        return FileGetVideoPreviewPlayInfoOutcome(outcome.result().payload());
+    }
+    else {
+        return FileGetVideoPreviewPlayInfoOutcome(outcome.error());
+    }
+}
 
 ////////////////////
 // Data

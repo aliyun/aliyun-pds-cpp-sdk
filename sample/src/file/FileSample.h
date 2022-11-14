@@ -12,6 +12,7 @@ public:
     void FileRename(const std::string& fileID);
     void FileTrash(const std::string& fileID);
     void FileDelete(const std::string& fileID);
+    void FileGetVideoPreviewPlayInfo(const std::string& fileID);
     void UserTagsPut(const std::string& fileID);
     void UserTagsDelete(const std::string& fileID);
 
