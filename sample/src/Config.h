@@ -13,5 +13,6 @@ public:
     static std::string FileToUpload;
     static std::string FileDownloadTo;
     static std::string CheckpointDir;
+    static std::string RemoteFilePath;
 };
 

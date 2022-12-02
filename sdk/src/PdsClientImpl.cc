@@ -475,6 +475,17 @@ FileGetOutcome PdsClientImpl::FileGet(const FileGetRequest& request) const
     }
 }
 
+FileGetOutcome PdsClientImpl::FileGetByPath(const FileGetByPathRequest& request) const
+{
+    auto outcome = MakeRequest(request, Http::Method::Post);
+    if (outcome.isSuccess()) {
+        return FileGetOutcome(FileGetResult(outcome.result().payload()));
+    }
+    else {
+        return FileGetOutcome(outcome.error());
+    }
+}
+
 FileRenameOutcome PdsClientImpl::FileRename(const FileRenameRequest& request) const
 {
     auto outcome = MakeRequest(request, Http::Method::Post);

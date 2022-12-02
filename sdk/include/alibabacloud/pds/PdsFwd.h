@@ -52,6 +52,7 @@
 #include <alibabacloud/pds/model/FileCompleteResult.h>
 #include <alibabacloud/pds/model/FileGetDownloadUrlRequest.h>
 #include <alibabacloud/pds/model/FileGetDownloadUrlResult.h>
+#include <alibabacloud/pds/model/FileGetByPathRequest.h>
 #include <alibabacloud/pds/model/FileGetRequest.h>
 #include <alibabacloud/pds/model/FileGetResult.h>
 #include <alibabacloud/pds/model/FileDeleteRequest.h>
