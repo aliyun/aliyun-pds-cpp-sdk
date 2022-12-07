@@ -12,4 +12,3 @@ std::string Config::DirToDownload = "";
 std::string Config::FileToUpload = "";
 std::string Config::FileDownloadTo = "";
 std::string Config::CheckpointDir = "checkpoint_dir";
-std::string Config::RemoteFilePath = "";

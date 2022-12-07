@@ -163,11 +163,6 @@ FileGetOutcome PdsClient::FileGet(const FileGetRequest& request) const
     return client_->FileGet(request);
 }
 
-FileGetOutcome PdsClient::FileGetByPath(const FileGetByPathRequest& request) const
-{
-    return client_->FileGetByPath(request);
-}
-
 FileRenameOutcome PdsClient::FileRename(const FileRenameRequest& request) const
 {
     return client_->FileRename(request);

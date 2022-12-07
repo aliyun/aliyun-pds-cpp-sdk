@@ -134,18 +134,7 @@ void FileSample::FileGet(const std::string& fileID)
         PrintError(__FUNCTION__, outcome.error());
         return;
     }
-    std::cout << __FUNCTION__ << " call FileGet success, file id: " << fileID << ", name: " << outcome.result().Name() << std::endl;
-}
-
-void FileSample::FileGetByPath(const std::string& fileID)
-{
-    FileGetByPathRequest request(Config::DriveID, Config::RemoteFilePath);
-    auto outcome = client->FileGetByPath(request);
-    if (!outcome.isSuccess()) {
-        PrintError(__FUNCTION__, outcome.error());
-        return;
-    }
-    std::cout << __FUNCTION__ << " call FileGetByPath success, file id: " << fileID << ", name: " << outcome.result().Name() << std::endl;
+    std::cout << __FUNCTION__ << " call FileRename success, file id: " << fileID << ", name: " << outcome.result().Name() << std::endl;
 }
 
 void FileSample::FileRename(const std::string& fileID)
