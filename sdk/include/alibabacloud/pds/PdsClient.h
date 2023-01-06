@@ -58,6 +58,9 @@ namespace PDS
         DirRenameOutcome DirRename(const DirRenameRequest& request) const;
         DirTrashOutcome DirTrash(const DirTrashRequest& request) const;
         DirDeleteOutcome DirDelete(const DirDeleteRequest& request) const;
+        DirCopyOutcome DirCopy(const DirCopyRequest& request) const;
+        DirMoveOutcome DirMove(const DirMoveRequest& request) const;
+        DirHiddenOutcome DirHidden(const DirHiddenRequest& request) const;
 
         /*File*/
         FileCreateOutcome FileCreate(const FileCreateRequest& request) const;
@@ -70,6 +73,9 @@ namespace PDS
         FileTrashOutcome FileTrash(const FileTrashRequest& request) const;
         FileDeleteOutcome FileDelete(const FileDeleteRequest& request) const;
         FileGetVideoPreviewPlayInfoOutcome FileGetVideoPreviewPlayInfo(const FileGetVideoPreviewPlayInfoRequest& request) const;
+        FileCopyOutcome FileCopy(const FileCopyRequest& request) const;
+        FileMoveOutcome FileMove(const FileMoveRequest& request) const;
+        FileHiddenOutcome FileHidden(const FileHiddenRequest& request) const;
 
         /*Data*/
         DataGetOutcome DataGetByUrl(const DataGetByUrlRequest& request) const;

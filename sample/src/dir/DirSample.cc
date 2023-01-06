@@ -114,6 +114,44 @@ std::string DirSample::DirDelete(const std::string& fileID)
     return outcome.result().AsyncTaskID();
 }
 
+std::string DirSample::DirCopy(const std::string& fileID, const std::string& toParentFileID)
+{
+    DirCopyRequest request(Config::DriveID, fileID, toParentFileID, true);
+    auto outcome = client->DirCopy(request);
+    if (!outcome.isSuccess()) {
+        PrintError(__FUNCTION__, outcome.error());
+        return "";
+    }
+     std::cout << __FUNCTION__ << " call DirCopy success, target drive id: " << outcome.result().DriveID() << ", file id: " << outcome.result().FileID() <<
+        " task id: " << outcome.result().AsyncTaskID() << std::endl;
+    return outcome.result().AsyncTaskID();
+}
+
+std::string DirSample::DirMove(const std::string& fileID, const std::string& toParentFileID)
+{
+    DirMoveRequest request(Config::DriveID, fileID, toParentFileID, "auto_rename");
+    auto outcome = client->DirMove(request);
+    if (!outcome.isSuccess()) {
+        PrintError(__FUNCTION__, outcome.error());
+        return "";
+    }
+     std::cout << __FUNCTION__ << " call DirMove success, target drive id: " << outcome.result().DriveID() << ", file id: " << outcome.result().FileID() <<
+        " task id: " << outcome.result().AsyncTaskID() << std::endl;
+    return outcome.result().AsyncTaskID();
+}
+
+void DirSample::DirHidden(const std::string& fileID)
+{
+    DirHiddenRequest request(Config::DriveID, fileID, false);
+    auto outcome = client->DirHidden(request);
+    if (!outcome.isSuccess()) {
+        PrintError(__FUNCTION__, outcome.error());
+        return;
+    }
+    std::cout << __FUNCTION__ << " call DirHidden success, hidden status: " << outcome.result().Hidden() << std::endl;
+}
+
+
 void DirSample::AsyncTaskGet(const std::string& asyncTaskID)
 {
     AsyncTaskGetRequest request(asyncTaskID);

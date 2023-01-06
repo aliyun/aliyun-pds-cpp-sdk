@@ -41,6 +41,12 @@
 #include <alibabacloud/pds/model/DirRenameResult.h>
 #include <alibabacloud/pds/model/DirTrashRequest.h>
 #include <alibabacloud/pds/model/DirTrashResult.h>
+#include <alibabacloud/pds/model/DirCopyRequest.h>
+#include <alibabacloud/pds/model/DirCopyResult.h>
+#include <alibabacloud/pds/model/DirMoveRequest.h>
+#include <alibabacloud/pds/model/DirMoveResult.h>
+#include <alibabacloud/pds/model/DirHiddenRequest.h>
+#include <alibabacloud/pds/model/DirHiddenResult.h>
 
 #include <alibabacloud/pds/model/FileCreateRequest.h>
 #include <alibabacloud/pds/model/FileCreateResult.h>
@@ -64,6 +70,12 @@
 #include <alibabacloud/pds/model/FileDownloadRequest.h>
 #include <alibabacloud/pds/model/FileGetVideoPreviewPlayInfoRequest.h>
 #include <alibabacloud/pds/model/FileGetVideoPreviewPlayInfoResult.h>
+#include <alibabacloud/pds/model/FileCopyRequest.h>
+#include <alibabacloud/pds/model/FileCopyResult.h>
+#include <alibabacloud/pds/model/FileMoveRequest.h>
+#include <alibabacloud/pds/model/FileMoveResult.h>
+#include <alibabacloud/pds/model/FileHiddenRequest.h>
+#include <alibabacloud/pds/model/FileHiddenResult.h>
 
 #include <alibabacloud/pds/model/DataGetByUrlRequest.h>
 #include <alibabacloud/pds/model/DataGetResult.h>
@@ -87,12 +99,16 @@ namespace PDS
 
     using AsyncTaskGetOutcome = Outcome<PdsError, AsyncTaskGetResult>;
 
+
     using DirCreateOutcome = Outcome<PdsError, DirCreateResult>;
     using DirListOutcome = Outcome<PdsError, DirListResult>;
     using DirSearchOutcome = Outcome<PdsError, DirSearchResult>;
     using DirRenameOutcome = Outcome<PdsError, DirRenameResult>;
     using DirTrashOutcome = Outcome<PdsError, DirTrashResult>;
     using DirDeleteOutcome = Outcome<PdsError, DirDeleteResult>;
+    using DirCopyOutcome = Outcome<PdsError, DirCopyResult>;
+    using DirMoveOutcome = Outcome<PdsError, DirMoveResult>;
+    using DirHiddenOutcome = Outcome<PdsError, DirHiddenResult>;
 
     using FileCreateOutcome = Outcome<PdsError, FileCreateResult>;
     using FileGetUploadUrlOutcome = Outcome<PdsError, FileGetUploadUrlResult>;
@@ -104,6 +120,9 @@ namespace PDS
     using FileTrashOutcome = Outcome<PdsError, FileTrashResult>;
     using FileDeleteOutcome = Outcome<PdsError, FileDeleteResult>;
     using FileGetVideoPreviewPlayInfoOutcome = Outcome<PdsError, FileGetVideoPreviewPlayInfoResult>;
+    using FileCopyOutcome = Outcome<PdsError, FileCopyResult>;
+    using FileMoveOutcome = Outcome<PdsError, FileMoveResult>;
+    using FileHiddenOutcome = Outcome<PdsError, FileHiddenResult>;
 
     using DataGetOutcome = Outcome<PdsError, DataGetResult>;
     using DataPutOutcome = Outcome<PdsError, DataPutResult>;

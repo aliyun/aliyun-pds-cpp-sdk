@@ -129,6 +129,21 @@ DirDeleteOutcome PdsClient::DirDelete(const DirDeleteRequest& request) const
     return client_->DirDelete(request);
 }
 
+DirCopyOutcome PdsClient::DirCopy(const DirCopyRequest& request) const
+{
+    return client_->DirCopy(request);
+}
+
+DirMoveOutcome PdsClient::DirMove(const DirMoveRequest& request) const
+{
+    return client_->DirMove(request);
+}
+
+DirHiddenOutcome PdsClient::DirHidden(const DirHiddenRequest& request) const
+{
+    return client_->DirHidden(request);
+}
+
 
 ////////////////////
 // File
@@ -182,6 +197,22 @@ FileGetVideoPreviewPlayInfoOutcome PdsClient::FileGetVideoPreviewPlayInfo(const 
 {
     return client_->FileGetVideoPreviewPlayInfo(request);
 }
+
+FileCopyOutcome PdsClient::FileCopy(const FileCopyRequest& request) const
+{
+    return client_->FileCopy(request);
+}
+
+FileMoveOutcome PdsClient::FileMove(const FileMoveRequest& request) const
+{
+    return client_->FileMove(request);
+}
+
+FileHiddenOutcome PdsClient::FileHidden(const FileHiddenRequest& request) const
+{
+    return client_->FileHidden(request);
+}
+
 
 ////////////////////
 // Data

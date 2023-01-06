@@ -228,3 +228,38 @@ void FileSample::UserTagsDelete(const std::string& fileID)
     }
     std::cout << __FUNCTION__ << " call MetaUserTagsDelete success, fileID:" << fileID << std::endl;
 }
+
+void FileSample::FileCopy(const std::string& fileID, const std::string& toParentFileID)
+{
+    FileCopyRequest request(Config::DriveID, fileID, toParentFileID, true);
+    auto outcome = client->FileCopy(request);
+    if (!outcome.isSuccess()) {
+        PrintError(__FUNCTION__, outcome.error());
+        return;
+    }
+    std::cout << __FUNCTION__ << " call FileCopy success, target drive id: " << outcome.result().DriveID() << ", file id: " << outcome.result().FileID() << std::endl;
+}
+
+std::string FileSample::FileMove(const std::string& fileID, const std::string& toParentFileID)
+{
+    FileMoveRequest request(Config::DriveID, fileID, toParentFileID, "auto_rename");
+    auto outcome = client->FileMove(request);
+    if (!outcome.isSuccess()) {
+        PrintError(__FUNCTION__, outcome.error());
+        return "";
+    }
+    std::cout << __FUNCTION__ << " call FileMove success, target drive id: " << outcome.result().DriveID() << ", file id: " << outcome.result().FileID() <<
+        " task id: " << outcome.result().AsyncTaskID() << std::endl;
+    return outcome.result().AsyncTaskID();
+}
+
+void FileSample::FileHidden(const std::string& fileID)
+{
+    FileHiddenRequest request(Config::DriveID, fileID, false);
+    auto outcome = client->FileHidden(request);
+    if (!outcome.isSuccess()) {
+        PrintError(__FUNCTION__, outcome.error());
+        return;
+    }
+    std::cout << __FUNCTION__ << " call FileHidden success, hidden status: " << outcome.result().Hidden() << std::endl;
+}

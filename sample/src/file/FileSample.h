@@ -15,6 +15,9 @@ public:
     void FileGetVideoPreviewPlayInfo(const std::string& fileID);
     void UserTagsPut(const std::string& fileID);
     void UserTagsDelete(const std::string& fileID);
+    void FileCopy(const std::string& fileID, const std::string& toParentFileID);
+    std::string FileMove(const std::string& fileID, const std::string& toParentFileID);
+    void FileHidden(const std::string& fileID);
 
 private:
     void PrintError(const std::string &funcName, const AlibabaCloud::PDS::PdsError &error);

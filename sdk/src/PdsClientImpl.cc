@@ -406,6 +406,40 @@ DirDeleteOutcome PdsClientImpl::DirDelete(const DirDeleteRequest& request) const
     }
 }
 
+DirCopyOutcome PdsClientImpl::DirCopy(const DirCopyRequest& request) const
+{
+    auto outcome = MakeRequest(request, Http::Method::Post);
+    if (outcome.isSuccess()) {
+        return DirCopyOutcome(DirCopyResult(outcome.result().payload()));
+    }
+    else {
+        return DirCopyOutcome(outcome.error());
+    }
+}
+
+DirMoveOutcome PdsClientImpl::DirMove(const DirMoveRequest& request) const
+{
+    auto outcome = MakeRequest(request, Http::Method::Post);
+    if (outcome.isSuccess()) {
+        return DirMoveOutcome(DirMoveResult(outcome.result().payload()));
+    }
+    else {
+        return DirMoveOutcome(outcome.error());
+    }
+}
+
+DirHiddenOutcome PdsClientImpl::DirHidden(const DirHiddenRequest& request) const
+{
+    auto outcome = MakeRequest(request, Http::Method::Post);
+    if (outcome.isSuccess()) {
+        return DirHiddenOutcome(DirHiddenResult(outcome.result().payload()));
+    }
+    else {
+        return DirHiddenOutcome(outcome.error());
+    }
+}
+
+
 ////////////////////
 // File
 ////////////////////
@@ -518,6 +552,40 @@ FileGetVideoPreviewPlayInfoOutcome PdsClientImpl::FileGetVideoPreviewPlayInfo(co
         return FileGetVideoPreviewPlayInfoOutcome(outcome.error());
     }
 }
+
+FileCopyOutcome PdsClientImpl::FileCopy(const FileCopyRequest& request) const
+{
+    auto outcome = MakeRequest(request, Http::Method::Post);
+    if (outcome.isSuccess()) {
+        return FileCopyOutcome(FileCopyResult(outcome.result().payload()));
+    }
+    else {
+        return FileCopyOutcome(outcome.error());
+    }
+}
+
+FileMoveOutcome PdsClientImpl::FileMove(const FileMoveRequest& request) const
+{
+    auto outcome = MakeRequest(request, Http::Method::Post);
+    if (outcome.isSuccess()) {
+        return FileMoveOutcome(FileMoveResult(outcome.result().payload()));
+    }
+    else {
+        return FileMoveOutcome(outcome.error());
+    }
+}
+
+FileHiddenOutcome PdsClientImpl::FileHidden(const FileHiddenRequest& request) const
+{
+    auto outcome = MakeRequest(request, Http::Method::Post);
+    if (outcome.isSuccess()) {
+        return FileHiddenOutcome(FileHiddenResult(outcome.result().payload()));
+    }
+    else {
+        return FileHiddenOutcome(outcome.error());
+    }
+}
+
 
 ////////////////////
 // Data
