@@ -499,6 +499,9 @@ std::shared_ptr<HttpResponse> CurlHttpClient::makeRequest(const std::shared_ptr<
         break;
     case Http::Method::Post:
         curl_easy_setopt(curl, CURLOPT_POST, 1L);
+        if (request->hasHeader(Http::CONTENT_LENGTH)) {
+            curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, std::atol(request->Header(Http::CONTENT_LENGTH).c_str()));
+        }
         break;
     case Http::Method::Delete:
         curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
